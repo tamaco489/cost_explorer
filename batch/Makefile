@@ -51,7 +51,8 @@ delete-images:
 # =================================================================
 FUNCTION_NAME := dev-cost-explorer
 OUTPUT_JSON   := payload/result/output.json
-PAYLOAD_FILE  := payload/dailyCostReport.json
+ENCODED_PAYLOAD_DAILY := $(shell echo -n '{"type": "dailyCostReport"}' | base64)
+ENCODED_PAYLOAD_WEEKLY := $(shell echo -n '{"type": "weeklyCostReport"}' | base64)
 
 .PHONY: deploy invoke-daily
 deploy: push
@@ -61,8 +62,16 @@ deploy: push
 
 invoke-daily:
 	@echo "Invoking Lambda with event type: dailyCostReport"
-	ENCODED_PAYLOAD=$(shell cat $(PAYLOAD_FILE) | base64) && aws lambda invoke \
+	aws lambda invoke \
 		--profile $(AWS_PROFILE) \
 		--function-name $(FUNCTION_NAME) \
-		--payload "$(ENCODED_PAYLOAD)" \
+		--payload "$(ENCODED_PAYLOAD_DAILY)" \
+		$(OUTPUT_JSON) | jq .
+
+invoke-weekly:
+	@echo "Invoking Lambda with event type: weeklyCostReport"
+	aws lambda invoke \
+		--profile $(AWS_PROFILE) \
+		--function-name $(FUNCTION_NAME) \
+		--payload "$(ENCODED_PAYLOAD_WEEKLY)" \
 		$(OUTPUT_JSON) | jq .
