@@ -3,8 +3,6 @@ package usecase
 import (
 	"context"
 	"fmt"
-	"log"
-	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/costexplorer"
@@ -48,8 +46,6 @@ func (j *Job) getYesterdayCost(ctx context.Context) (string, error) {
 	yesterday := j.execTime.AddDate(0, 0, -1).Format("2006-01-02")
 	endDate := j.execTime.Format("2006-01-02")
 
-	log.Println("[1] getYesterdayCost |", "昨日:", yesterday, "現在日:", endDate)
-
 	output, err := j.costExplorerClient.GetCostAndUsage(ctx, &costexplorer.GetCostAndUsageInput{
 		TimePeriod: &types.DateInterval{
 			Start: &yesterday,
@@ -76,8 +72,6 @@ func (j *Job) getActualCost(ctx context.Context) (string, error) {
 	// 今月の開始日と現在日
 	startDate := time.Date(j.execTime.Year(), j.execTime.Month(), 1, 0, 0, 0, 0, time.UTC).Format("2006-01-02")
 	endDate := j.execTime.Format("2006-01-02")
-
-	log.Println("[2] getCost |", "今月の開始日:", startDate, "現在日:", endDate)
 
 	output, err := j.costExplorerClient.GetCostAndUsage(ctx, &costexplorer.GetCostAndUsageInput{
 		TimePeriod: &types.DateInterval{
@@ -121,15 +115,7 @@ func (j *Job) getForecastCost(actualCost string) (string, error) {
 	// 予測コスト
 	forecastCost := averageCostPerDay * float64(daysInMonth)
 
-	log.Println("[3] getForecastCost |", "今月の総日数:", daysInMonth, "今日までの日数:", currentDay)
-	log.Println("[4] getForecastCost |", "1日あたりの平均コスト:", averageCostPerDay, "予測コスト:", forecastCost)
-
 	return fmt.Sprintf("%.2f", forecastCost), nil
-}
-
-// parseCost: 文字列を float64 に変換する
-func parseCost(cost string) (float64, error) {
-	return strconv.ParseFloat(cost, 64)
 }
 
 // dailyCostReport: 日次利用コストレポート向けのメッセージを生成するための構造体
