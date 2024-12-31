@@ -7,6 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.32.7
 	github.com/aws/aws-sdk-go-v2/config v1.28.7
 	github.com/aws/aws-sdk-go-v2/service/costexplorer v1.46.0
+	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.34.8
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/slack-go/slack v0.15.0
 )
