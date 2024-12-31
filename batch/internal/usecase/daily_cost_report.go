@@ -33,12 +33,8 @@ func (j *Job) DailyCostReport(ctx context.Context) error {
 	report := newDailyCostReport(yesterdayCost, actualCost, forecastCost)
 	message := report.genSlackMessage()
 
-	// NOTE: 後ほどSecret Managerから値を取得できるようにする。
-	webhookURL := "https://hooks.slack.com/services/<webhook-url>"
-	userName := configuration.Get().ServiceName
-	title := "daily-cost-report"
-
-	sc := slack.NewSlackClient(webhookURL, userName)
+	const title = "daily-cost-report"
+	sc := slack.NewSlackClient(configuration.Get().Slack.WebHookURL, configuration.Get().ServiceName)
 	if err := sc.SendMessage(ctx, title, message); err != nil {
 		return fmt.Errorf("failed to send slack message: %w", err)
 	}
