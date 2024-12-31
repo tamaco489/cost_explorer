@@ -4,7 +4,7 @@
 VERSION       := cost_explorer_v0.0.0
 AWS_REGION    := ap-northeast-1
 IMAGE_NAME    := dev-cost-explorer
-FUNCTION_NAME := dev-cost-explorer
+
 
 # =================================================================
 # ci
@@ -49,20 +49,20 @@ delete-images:
 # =================================================================
 # lambda
 # =================================================================
-EVENT_TYPE_DAILY := '{"type": "dailyCostReport"}'
-ENCODED_PAYLOAD  := $(shell echo -n $(EVENT_TYPE_DAILY) | base64)
-OUTPUT_JSON      := payload/result/output.json
+FUNCTION_NAME := dev-cost-explorer
+OUTPUT_JSON   := payload/result/output.json
+PAYLOAD_FILE  := payload/dailyCostReport.json
 
 .PHONY: deploy invoke-daily
-# make deploy AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID} AWS_PROFILE=${AWS_PROFILE}
 deploy: push
-	aws lambda update-function-code  --profile ${AWS_PROFILE} \
+	aws lambda update-function-code  --profile $(AWS_PROFILE) \
 		--function-name $(FUNCTION_NAME) \
 		--image-uri $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/$(IMAGE_NAME):$(VERSION) | jq .
 
-# make invoke-daily AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID} AWS_PROFILE=${AWS_PROFILE}
 invoke-daily:
-	aws lambda invoke --profile ${AWS_PROFILE} \
+	@echo "Invoking Lambda with event type: dailyCostReport"
+	ENCODED_PAYLOAD=$(shell cat $(PAYLOAD_FILE) | base64) && aws lambda invoke \
+		--profile $(AWS_PROFILE) \
 		--function-name $(FUNCTION_NAME) \
-		--payload $(ENCODED_PAYLOAD) \
+		--payload "$(ENCODED_PAYLOAD)" \
 		$(OUTPUT_JSON) | jq .
