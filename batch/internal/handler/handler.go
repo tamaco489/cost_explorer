@@ -19,6 +19,12 @@ func JobHandler(job usecase.Job) Job {
 				return err
 			}
 
+		case "WeeklyCostReport":
+			if err := job.WeeklyCostReport(ctx); err != nil {
+				slog.ErrorContext(ctx, "WeeklyCostReport job failed", slog.String("error", err.Error()))
+				return err
+			}
+
 		default:
 			slog.DebugContext(ctx, "skip to process", slog.String("type:", event.Type))
 		}

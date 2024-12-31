@@ -8,6 +8,7 @@ import (
 
 type Jobber interface {
 	DailyCostReport(ctx context.Context) error
+	WeeklyCostReport(ctx context.Context) error
 }
 
 var _ Jobber = (*Job)(nil)
