@@ -32,7 +32,7 @@ data "aws_iam_policy_document" "cost_explorer" {
     actions = [
       "ce:GetCostAndUsage"
     ]
-    // NOTE: 検証が済んだらもう権限制限しよう
+    // NOTE: 検証が済んだら権限制限しよう
     resources = ["*"]
   }
 }
