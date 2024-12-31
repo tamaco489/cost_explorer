@@ -7,7 +7,7 @@ import (
 )
 
 type Jobber interface {
-	NotifyDaily(ctx context.Context) error
+	DailyCostReport(ctx context.Context) error
 }
 
 var _ Jobber = (*Job)(nil)

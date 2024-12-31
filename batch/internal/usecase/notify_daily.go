@@ -5,9 +5,9 @@ import (
 	"log"
 )
 
-func (j *Job) NotifyDaily(ctx context.Context) error {
+func (j *Job) DailyCostReport(ctx context.Context) error {
 
-	log.Println("NotifyDaily job started...")
+	log.Println("DailyCostReport job started...")
 
 	return nil
 }
