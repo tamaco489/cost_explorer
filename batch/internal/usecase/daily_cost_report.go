@@ -9,35 +9,44 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/costexplorer"
 	"github.com/aws/aws-sdk-go-v2/service/costexplorer/types"
+	"github.com/tamaco489/cost_explorer/batch/internal/configuration"
+	"github.com/tamaco489/cost_explorer/batch/internal/library/slack"
 )
 
 func (j *Job) DailyCostReport(ctx context.Context) error {
-	// 昨日の利用コスト
+
 	yesterdayCost, err := j.getYesterdayCost(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get yesterday cost: %w", err)
 	}
 
-	// 本日時点での今月の利用コスト
 	actualCost, err := j.getActualCost(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get actual cost: %w", err)
 	}
 
-	// 今月の利用コストの予測値
 	forecastCost, err := j.getForecastCost(actualCost)
 	if err != nil {
 		return fmt.Errorf("failed to get forecast cost: %w", err)
 	}
 
-	log.Printf("昨日の利用コスト: %s USD\n", yesterdayCost)
-	log.Printf("本日時点での今月の利用コスト: %s USD\n", actualCost)
-	log.Printf("今月の利用コストの予測値: %s USD\n", forecastCost)
+	report := newDailyCostReport(yesterdayCost, actualCost, forecastCost)
+	message := report.genSlackMessage()
+
+	// NOTE: 後ほどSecret Managerから値を取得できるようにする。
+	webhookURL := "https://hooks.slack.com/services/<webhook-url>"
+	userName := configuration.Get().ServiceName
+	title := "daily-cost-report"
+
+	sc := slack.NewSlackClient(webhookURL, userName)
+	if err := sc.SendMessage(ctx, title, message); err != nil {
+		return fmt.Errorf("failed to send slack message: %w", err)
+	}
 
 	return nil
 }
 
-// 昨日の利用コストを取得する
+// getYesterdayCost: 昨日の利用コストを取得する
 func (j *Job) getYesterdayCost(ctx context.Context) (string, error) {
 	// 昨日の開始日と終了日を計算
 	yesterday := j.execTime.AddDate(0, 0, -1).Format("2006-01-02")
@@ -66,7 +75,7 @@ func (j *Job) getYesterdayCost(ctx context.Context) (string, error) {
 	return "0.0", nil
 }
 
-// 本日時点での今月の利用コストを取得する
+// getActualCost: 本日時点での今月の利用コストを取得する
 func (j *Job) getActualCost(ctx context.Context) (string, error) {
 	// 今月の開始日と現在日
 	startDate := time.Date(j.execTime.Year(), j.execTime.Month(), 1, 0, 0, 0, 0, time.UTC).Format("2006-01-02")
@@ -95,7 +104,7 @@ func (j *Job) getActualCost(ctx context.Context) (string, error) {
 	return "0.0", nil
 }
 
-// 今月の利用コストの予測値を算出する
+// getForecastCost: 今月の利用コストの予測値を算出する
 func (j *Job) getForecastCost(actualCost string) (string, error) {
 	// 今月の総日数
 	currentYear, currentMonth, _ := j.execTime.Date()
@@ -122,7 +131,35 @@ func (j *Job) getForecastCost(actualCost string) (string, error) {
 	return fmt.Sprintf("%.2f", forecastCost), nil
 }
 
-// parseCost はコスト文字列を float64 に変換する
+// parseCost: 文字列を float64 に変換する
 func parseCost(cost string) (float64, error) {
 	return strconv.ParseFloat(cost, 64)
+}
+
+// dailyCostReport: 日次利用コストレポート向けのメッセージを生成するための構造体
+type dailyCostReport struct {
+	yesterdayCost string
+	actualCost    string
+	forecastCost  string
+}
+
+// newDailyCostReport: 日次利用コストレポートを作成するためのコンストラクタ関数
+func newDailyCostReport(yesterdayCost, actualCost, forecastCost string) dailyCostReport {
+	return dailyCostReport{
+		yesterdayCost: yesterdayCost,
+		actualCost:    actualCost,
+		forecastCost:  forecastCost,
+	}
+}
+
+// genSlackMessage: 日次利用コストレポートのメッセージを生成する
+func (r dailyCostReport) genSlackMessage() slack.Attachment {
+	return slack.Attachment{
+		Pretext: fmt.Sprintf(`
+• 昨日の利用コスト: %s USD
+• 本日時点での今月の利用コスト: %s USD
+• 今月の利用コストの予測値: %s USD
+`, r.yesterdayCost, r.actualCost, r.forecastCost,
+		),
+	}
 }

@@ -23,10 +23,10 @@ type Job struct {
 func NewJob(cfg configuration.Config) (*Job, error) {
 
 	execTime := time.Now()
-	client := costexplorer.NewFromConfig(cfg.AWSConfig)
+	costExplorerClient := costexplorer.NewFromConfig(cfg.AWSConfig)
 
 	return &Job{
 		execTime:           execTime,
-		costExplorerClient: client,
+		costExplorerClient: costExplorerClient,
 	}, nil
 }
