@@ -1,8 +1,10 @@
 # =================================================================
 # common
 # =================================================================
-VERSION := cost_explorer_v0.0.0
-
+VERSION       := cost_explorer_v0.0.0
+AWS_REGION    := ap-northeast-1
+IMAGE_NAME    := dev-cost-explorer
+FUNCTION_NAME := dev-cost-explorer
 
 # =================================================================
 # ci
@@ -26,30 +28,41 @@ run: build
 # =================================================================
 .PHONY: auth push image-list delete-images
 auth:
-	aws ecr get-login-password --region ap-northeast-1 --profile ${AWS_PROFILE} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.ap-northeast-1.amazonaws.com
+	aws ecr get-login-password --region $(AWS_REGION) --profile ${AWS_PROFILE} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.$(AWS_REGION).amazonaws.com
 
 # make push AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID} AWS_PROFILE=${AWS_PROFILE}
 push: auth
-	docker build --platform linux/amd64 --no-cache -t $(AWS_ACCOUNT_ID).dkr.ecr.ap-northeast-1.amazonaws.com/dev-cost-explorer:$(VERSION) -f ./build/Dockerfile.cost_explorer .
-	docker push ${AWS_ACCOUNT_ID}.dkr.ecr.ap-northeast-1.amazonaws.com/dev-cost-explorer:$(VERSION)
+	docker build --platform linux/amd64 --no-cache -t $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/$(IMAGE_NAME):$(VERSION) -f ./build/Dockerfile.cost_explorer .
+	docker push ${AWS_ACCOUNT_ID}.dkr.ecr.$(AWS_REGION).amazonaws.com/$(IMAGE_NAME):$(VERSION)
 
 image-list:
-	aws ecr list-images --repository-name dev-cost-explorer --region ap-northeast-1 --profile ${AWS_PROFILE} --query 'imageIds[*]' | jq .
+	aws ecr list-images --repository-name $(IMAGE_NAME) --region $(AWS_REGION) --profile ${AWS_PROFILE} --query 'imageIds[*]' | jq .
 
 # make delete-images AWS_PROFILE=${AWS_PROFILE}
 delete-images:
-	@aws ecr list-images --repository-name dev-cost-explorer --region ap-northeast-1 --profile ${AWS_PROFILE} --query 'imageIds[*]' --output json > /tmp/images.json
+	@aws ecr list-images --repository-name $(IMAGE_NAME) --region $(AWS_REGION) --profile ${AWS_PROFILE} --query 'imageIds[*]' --output json > /tmp/images.json
 	@cat /tmp/images.json | jq -c '.[]' | while read -r image_id; do \
-	  aws ecr batch-delete-image --repository-name dev-cost-explorer --region ap-northeast-1 --profile ${AWS_PROFILE} --image-ids $${image_id}; \
+	  aws ecr batch-delete-image --repository-name $(IMAGE_NAME) --region $(AWS_REGION) --profile ${AWS_PROFILE} --image-ids $${image_id}; \
 	done | jq .
 
 
 # =================================================================
 # lambda
 # =================================================================
-.PHONY: deploy
+EVENT_TYPE_DAILY := '{"type": "dailyCostReport"}'
+ENCODED_PAYLOAD  := $(shell echo -n $(EVENT_TYPE_DAILY) | base64)
+OUTPUT_JSON      := payload/result/output.json
+
+.PHONY: deploy invoke-daily
 # make deploy AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID} AWS_PROFILE=${AWS_PROFILE}
 deploy: push
 	aws lambda update-function-code  --profile ${AWS_PROFILE} \
-		--function-name dev-cost-explorer \
-		--image-uri $(AWS_ACCOUNT_ID).dkr.ecr.ap-northeast-1.amazonaws.com/dev-cost-explorer:$(VERSION) | jq .
+		--function-name $(FUNCTION_NAME) \
+		--image-uri $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/$(IMAGE_NAME):$(VERSION) | jq .
+
+# make invoke-daily AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID} AWS_PROFILE=${AWS_PROFILE}
+invoke-daily:
+	aws lambda invoke --profile ${AWS_PROFILE} \
+		--function-name $(FUNCTION_NAME) \
+		--payload $(ENCODED_PAYLOAD) \
+		$(OUTPUT_JSON) | jq .
