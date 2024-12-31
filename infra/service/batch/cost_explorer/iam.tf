@@ -29,6 +29,13 @@ resource "aws_iam_role_policy" "cost_explorer" {
 data "aws_iam_policy_document" "cost_explorer" {
   statement {
     effect  = "Allow"
+    actions = ["secretsmanager:GetSecretValue"]
+    resources = [
+      data.aws_secretsmanager_secret.slack_config.arn,
+    ]
+  }
+  statement {
+    effect  = "Allow"
     actions = [
       "ce:GetCostAndUsage"
     ]
