@@ -11,7 +11,7 @@ import (
 
 type Config struct {
 	Env         string `envconfig:"ENV" default:"dev"`
-	ServiceName string `envconfig:"API_SERVICE_NAME" default:"cost_explorer"`
+	ServiceName string `envconfig:"SERVICE_NAME" default:"cost-explorer"`
 	AWSConfig   aws.Config
 }
 
