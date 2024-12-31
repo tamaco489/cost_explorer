@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/tamaco489/cost_explorer/batch/internal/configuration"
@@ -11,8 +10,6 @@ import (
 )
 
 func main() {
-	log.Println("Starting server")
-
 	ctx := context.Background()
 	cfg, err := configuration.Load(ctx)
 	if err != nil {
