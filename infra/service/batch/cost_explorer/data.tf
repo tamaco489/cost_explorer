@@ -13,3 +13,7 @@ data "terraform_remote_state" "lambda" {
     key    = "lambda/terraform.tfstate"
   }
 }
+
+data "aws_secretsmanager_secret" "slack_config" {
+  name = "${var.product}/${var.env}/slack"
+}
