@@ -40,7 +40,7 @@ func (j *Job) WeeklyCostReport(ctx context.Context) error {
 
 // getLastWeekCost: 先週の利用コストを取得する
 func (j *Job) getLastWeekCost(ctx context.Context) (string, error) {
-	// 先週の開始日と終了日を計算
+
 	endDate := j.execTime.AddDate(0, 0, -7).Format("2006-01-02")
 	startDate := j.execTime.AddDate(0, 0, -13).Format("2006-01-02")
 
@@ -72,7 +72,7 @@ func (j *Job) getLastWeekCost(ctx context.Context) (string, error) {
 
 // getWeekBeforeLastCost: 先々週の利用コストを取得する
 func (j *Job) getWeekBeforeLastCost(ctx context.Context) (string, error) {
-	// 先々週の開始日と終了日を計算
+
 	endDate := j.execTime.AddDate(0, 0, -14).Format("2006-01-02")
 	startDate := j.execTime.AddDate(0, 0, -20).Format("2006-01-02")
 
@@ -104,6 +104,7 @@ func (j *Job) getWeekBeforeLastCost(ctx context.Context) (string, error) {
 
 // calculatePercentageChange: コストの増減率を計算する
 func calculatePercentageChange(lastWeekCost, weekBeforeLastCost string) string {
+
 	lastWeek, err := parseCost(lastWeekCost)
 	if err != nil {
 		log.Printf("failed to parse last week cost: %v", err)
