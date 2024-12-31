@@ -19,7 +19,7 @@ func JobHandler(job usecase.Job) Job {
 				return err
 			}
 
-		case "WeeklyCostReport":
+		case "weeklyCostReport":
 			if err := job.WeeklyCostReport(ctx); err != nil {
 				slog.ErrorContext(ctx, "WeeklyCostReport job failed", slog.String("error", err.Error()))
 				return err
