@@ -34,7 +34,7 @@ func (j *Job) DailyCostReport(ctx context.Context) error {
 	message := report.genSlackMessage()
 
 	const title = "daily-cost-report"
-	sc := slack.NewSlackClient(configuration.Get().Slack.WebHookURL, configuration.Get().ServiceName)
+	sc := slack.NewSlackClient(configuration.Get().Slack.DailyWebHookURL, configuration.Get().ServiceName)
 	if err := sc.SendMessage(ctx, title, message); err != nil {
 		return fmt.Errorf("failed to send slack message: %w", err)
 	}
