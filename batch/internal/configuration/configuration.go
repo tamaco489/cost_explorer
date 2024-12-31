@@ -14,13 +14,15 @@ type Config struct {
 	Env         string `envconfig:"ENV" default:"dev"`
 	ServiceName string `envconfig:"SERVICE_NAME" default:"cost-explorer"`
 	Slack       struct {
-		WebHookURL string
+		DailyWebHookURL  string
+		WeeklyWebHookURL string
 	}
 	AWSConfig aws.Config
 }
 
 type SlackConfig struct {
-	WebHookURL string `json:"webhook_url"`
+	DailyWebHookURL  string `json:"daily_webhook_url"`
+	WeeklyWebHookURL string `json:"weekly_webhook_url"`
 }
 
 var globalConfig Config
@@ -59,7 +61,8 @@ func loadSlackConfig(ctx context.Context, cfg Config, env string) error {
 		return fmt.Errorf("failed to parse slack config: %w", err)
 	}
 
-	globalConfig.Slack.WebHookURL = slackCfg.WebHookURL
+	globalConfig.Slack.DailyWebHookURL = slackCfg.DailyWebHookURL
+	globalConfig.Slack.WeeklyWebHookURL = slackCfg.WeeklyWebHookURL
 
 	return nil
 }
