@@ -23,6 +23,7 @@ locals {
 variable "slack_config" {
   type = map(string)
   default = {
-    webhook_url = "https://hooks.slack.com/services/<webhook-url>"
+    daily_webhook_url = "https://hooks.slack.com/services/<webhook-url>"
+    weekly_webhook_url = "https://hooks.slack.com/services/<webhook-url>"
   }
 }
