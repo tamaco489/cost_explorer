@@ -23,7 +23,7 @@ type Config struct {
 	AWSConfig aws.Config
 }
 
-type SlackConfig struct {
+type slackConfig struct {
 	DailyWebHookURL  string `json:"daily_webhook_url"`
 	WeeklyWebHookURL string `json:"weekly_webhook_url"`
 }
@@ -63,7 +63,7 @@ func loadSlackConfig(ctx context.Context, cfg Config, env string) error {
 		return fmt.Errorf("failed to get slack config: %w", err)
 	}
 
-	var slackCfg SlackConfig
+	var slackCfg slackConfig
 	if err := json.Unmarshal([]byte(result), &slackCfg); err != nil {
 		return fmt.Errorf("failed to parse slack config: %w", err)
 	}
