@@ -64,9 +64,7 @@ func (j *Job) DailyCostReport(ctx context.Context) error {
 	// NOTE: debug log
 	exchangeRatesResponseLogs(ctx, ratesResponse)
 
-	// 現時点の為替レートを取得できたので、このJPYの値を基準値として、USDをJPYに変換する
 	// ************************* 4. 取得した為替レートを利用して、利用コストをUSDからJPYに変換 *************************
-
 	yesterdayCostFloat, err := strconv.ParseFloat(yesterdayCost, 64)
 	if err != nil {
 		return fmt.Errorf("failed to parse yesterdayCost to float64: %w", err)
@@ -82,16 +80,22 @@ func (j *Job) DailyCostReport(ctx context.Context) error {
 		return fmt.Errorf("failed to parse forecast cost: %w", err)
 	}
 
-	usdToJpyRate := ratesResponse.Rates[exchange_rates.JPY.String()]
-	yesterdayCostJPY := yesterdayCostFloat * usdToJpyRate // 昨日利用したコスト
-	actualCostJPY := actualCostFloat * usdToJpyRate       // 本日時点で利用した総コスト
-	forecastCostJPY := forecastCostFloat * usdToJpyRate   // 残り日数を考慮した今月の利用コスト
+	// 1$あたりの円を取得
+	usdToJpyRate, ok := ratesResponse.Rates[exchange_rates.JPY.String()]
+	if !ok {
+		return fmt.Errorf("JPY exchange rate not found in the response: %+v", ratesResponse.Rates)
+	}
+
+	// 小数点第二位を切り上げ
+	yesterdayCostJPY := roundUpToTwoDecimalPlaces(yesterdayCostFloat * usdToJpyRate) // 昨日利用したコスト
+	actualCostJPY := roundUpToTwoDecimalPlaces(actualCostFloat * usdToJpyRate)       // 本日時点で利用した総コスト
+	forecastCostJPY := roundUpToTwoDecimalPlaces(forecastCostFloat * usdToJpyRate)   // 残り日数を考慮した今月の利用コスト
 
 	// NOTE: debug log
 	parsedJPYCostLogs(ctx, yesterdayCostJPY, actualCostJPY, forecastCostJPY)
 
 	// ************************* 5. Slackにメッセージを送信する *************************
-	report := newDailySlackReport(yesterdayCost, actualCost, forecastCost)
+	report := newDailySlackReport(yesterdayCostJPY, actualCostJPY, forecastCostJPY)
 	message := report.genSlackMessage()
 
 	sc := slack.NewSlackClient(configuration.Get().Slack.DailyWebHookURL, configuration.Get().ServiceName)
@@ -199,11 +203,11 @@ type dailySlackReport struct {
 }
 
 // newDailySlackReport: 日次利用コストレポートを作成するためのコンストラクタ関数
-func newDailySlackReport(yesterdayCost, actualCost, forecastCost string) dailySlackReport {
+func newDailySlackReport(yesterdayCost, actualCost, forecastCost float64) dailySlackReport {
 	return dailySlackReport{
-		yesterdayCost: yesterdayCost,
-		actualCost:    actualCost,
-		forecastCost:  forecastCost,
+		yesterdayCost: fmt.Sprintf("%.2f", yesterdayCost),
+		actualCost:    fmt.Sprintf("%.2f", actualCost),
+		forecastCost:  fmt.Sprintf("%.2f", forecastCost),
 	}
 }
 
@@ -211,9 +215,9 @@ func newDailySlackReport(yesterdayCost, actualCost, forecastCost string) dailySl
 func (r dailySlackReport) genSlackMessage() slack.Attachment {
 	return slack.Attachment{
 		Pretext: fmt.Sprintf(`
-• 昨日の利用コスト: %s USD
-• 本日時点での今月の利用コスト: %s USD
-• 今月の利用コストの予測値: %s USD
+• 昨日の利用コスト: %s 円
+• 本日時点での今月の利用コスト: %s 円
+• 今月の利用コストの予測値: %s 円
 `, r.yesterdayCost, r.actualCost, r.forecastCost,
 		),
 	}
@@ -222,11 +226,11 @@ func (r dailySlackReport) genSlackMessage() slack.Attachment {
 // NOTE: debug用のログ
 func (fd formattedDateForDailyReport) formattedDateLogs(ctx context.Context) {
 	slog.InfoContext(ctx, "[1]. outputFormattedDateList:",
-		slog.String("昨日の日付", fd.yesterday),
-		slog.String("今月の開始日付", fd.startDate),
-		slog.String("今月の終了日付", fd.endDate),
-		slog.Int("今日までの日数", fd.currentDay),
-		slog.Int("今月の総日数", fd.daysInMonth),
+		slog.String("昨日の日付", fd.yesterday),   // 2024-12-28
+		slog.String("今月の開始日付", fd.startDate), // 2024-12-01
+		slog.String("今月の終了日付", fd.endDate),   // 2024-12-29
+		slog.Int("今日までの日数", fd.currentDay),   // 29
+		slog.Int("今月の総日数", fd.daysInMonth),   // 31
 	)
 }
 

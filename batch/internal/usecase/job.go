@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"math"
 	"strconv"
 	"time"
 
@@ -43,4 +44,10 @@ func NewJob(cfg configuration.Config) (*Job, error) {
 // parseCost: 文字列を float64 に変換する
 func (j *Job) parseCost(cost string) (float64, error) {
 	return strconv.ParseFloat(cost, 64)
+}
+
+// roundUpToTwoDecimalPlaces: float64 の値を小数点以下2桁で切り上げる。
+func roundUpToTwoDecimalPlaces(value float64) float64 {
+	factor := math.Pow(10, 2)
+	return math.Ceil(value*factor) / factor
 }

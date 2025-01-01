@@ -16,9 +16,6 @@ import (
 
 func (j *Job) WeeklyCostReport(ctx context.Context) error {
 
-	// NOTE: 検証用途として一時的に日付を書き換える
-	j.execTime = time.Date(2024, 12, 29, 0, 0, 0, 0, time.UTC)
-
 	fd := newFormattedDateForWeeklyReport(j.execTime)
 
 	// NOTE: debug log
