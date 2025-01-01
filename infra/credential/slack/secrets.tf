@@ -1,5 +1,5 @@
 resource "aws_secretsmanager_secret" "slack_config" {
-  name        = "${var.product}/${var.env}/slack"
+  name        = "${var.product}/${var.env}/slack/config"
   description = "manage confidential information on slack"
 }
 
