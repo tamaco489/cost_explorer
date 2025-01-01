@@ -18,8 +18,9 @@ func (j *Job) WeeklyCostReport(ctx context.Context) error {
 
 	fd := newFormattedDateForWeeklyReport(j.execTime)
 
-	// NOTE: debug log
-	fd.outputFormattedDateList(ctx)
+	if configuration.Get().Logging == "on" {
+		fd.formattedDateLogs(ctx)
+	}
 
 	lastWeekCost, err := j.getLastWeekCost(ctx, fd.lastWeekStartDate, fd.lastWeekEndDate)
 	if err != nil {
@@ -171,9 +172,9 @@ func (r weeklySlackReport) genSlackMessage() slack.Attachment {
 	}
 }
 
-// NOTE: debug用のログ
-func (fd formattedDateForWeeklyReport) outputFormattedDateList(ctx context.Context) {
-	slog.InfoContext(ctx, "outputFormattedDateList:",
+// NOTE: debug用途のログ
+func (fd formattedDateForWeeklyReport) formattedDateLogs(ctx context.Context) {
+	slog.InfoContext(ctx, "formatted date:",
 		slog.String("先週の開始日付", fd.lastWeekStartDate),
 		slog.String("先週の終了日付", fd.lastWeekEndDate),
 		slog.String("先々週の開始日付", fd.weekBeforeLastStartDate),

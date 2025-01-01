@@ -21,8 +21,8 @@ resource "aws_iam_role" "cost_explorer" {
 }
 
 resource "aws_iam_role_policy" "cost_explorer" {
-  name = "${local.fqn}-iam-role-policy"
-  role = aws_iam_role.cost_explorer.name
+  name   = "${local.fqn}-iam-role-policy"
+  role   = aws_iam_role.cost_explorer.name
   policy = data.aws_iam_policy_document.cost_explorer.json
 }
 
@@ -36,7 +36,7 @@ data "aws_iam_policy_document" "cost_explorer" {
     ]
   }
   statement {
-    effect  = "Allow"
+    effect = "Allow"
     actions = [
       "ce:GetCostAndUsage"
     ]

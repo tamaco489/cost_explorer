@@ -20,6 +20,7 @@ type Config struct {
 	ExchangeRates struct {
 		AppID string
 	}
+	Logging   string `envconfig:"LOGGING" default:"off"`
 	AWSConfig aws.Config
 }
 
