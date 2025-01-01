@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"strconv"
 	"time"
 
@@ -15,10 +16,11 @@ import (
 
 func (j *Job) WeeklyCostReport(ctx context.Context) error {
 
-	// NOTE: 検証用途として一時的に日付を書き換える
-	// j.execTime = time.Date(2024, 12, 29, 0, 0, 0, 0, time.UTC)
-
 	fd := newFormattedDateForWeeklyReport(j.execTime)
+
+	if configuration.Get().Logging == "on" {
+		fd.formattedDateLogs(ctx)
+	}
 
 	lastWeekCost, err := j.getLastWeekCost(ctx, fd.lastWeekStartDate, fd.lastWeekEndDate)
 	if err != nil {
@@ -36,7 +38,7 @@ func (j *Job) WeeklyCostReport(ctx context.Context) error {
 	message := report.genSlackMessage()
 
 	sc := slack.NewSlackClient(configuration.Get().Slack.WeeklyWebHookURL, configuration.Get().ServiceName)
-	if err := sc.SendMessage(ctx, slack.WeeklyCostReportTitle.String(), message); err != nil {
+	if err := sc.SendMessage(ctx, slack.WeeklyReportTitle.String(), message); err != nil {
 		return fmt.Errorf("failed to send slack message: %w", err)
 	}
 
@@ -168,4 +170,14 @@ func (r weeklySlackReport) genSlackMessage() slack.Attachment {
 			r.lastWeekCost, r.weekBeforeLastCost, r.percentageChange,
 		),
 	}
+}
+
+// NOTE: debug用途のログ
+func (fd formattedDateForWeeklyReport) formattedDateLogs(ctx context.Context) {
+	slog.InfoContext(ctx, "formatted date:",
+		slog.String("先週の開始日付", fd.lastWeekStartDate),
+		slog.String("先週の終了日付", fd.lastWeekEndDate),
+		slog.String("先々週の開始日付", fd.weekBeforeLastStartDate),
+		slog.String("先々週の終了日付", fd.weekBeforeLastEndDate),
+	)
 }

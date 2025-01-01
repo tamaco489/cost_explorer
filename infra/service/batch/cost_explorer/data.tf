@@ -15,5 +15,9 @@ data "terraform_remote_state" "lambda" {
 }
 
 data "aws_secretsmanager_secret" "slack_config" {
-  name = "${var.product}/${var.env}/slack"
+  name = "${var.product}/${var.env}/slack/config"
+}
+
+data "aws_secretsmanager_secret" "exchange_rates_app_id" {
+  name = "${var.product}/${var.env}/exchange-rates/app-id"
 }
