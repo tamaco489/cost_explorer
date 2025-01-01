@@ -15,6 +15,7 @@ resource "aws_lambda_function" "cost_explorer" {
     variables = {
       SERVICE_NAME = "cost-explorer"
       API_ENV      = "dev"
+      LOGGING      = "off"
     }
   }
 

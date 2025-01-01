@@ -21,8 +21,8 @@ resource "aws_iam_role" "cost_explorer" {
 }
 
 resource "aws_iam_role_policy" "cost_explorer" {
-  name = "${local.fqn}-iam-role-policy"
-  role = aws_iam_role.cost_explorer.name
+  name   = "${local.fqn}-iam-role-policy"
+  role   = aws_iam_role.cost_explorer.name
   policy = data.aws_iam_policy_document.cost_explorer.json
 }
 
@@ -32,10 +32,11 @@ data "aws_iam_policy_document" "cost_explorer" {
     actions = ["secretsmanager:GetSecretValue"]
     resources = [
       data.aws_secretsmanager_secret.slack_config.arn,
+      data.aws_secretsmanager_secret.exchange_rates_app_id.arn
     ]
   }
   statement {
-    effect  = "Allow"
+    effect = "Allow"
     actions = [
       "ce:GetCostAndUsage"
     ]
