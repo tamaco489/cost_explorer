@@ -34,6 +34,6 @@ func NewJob(cfg configuration.Config) (*Job, error) {
 
 // FIXME: 競合するので一旦退避。より適切な場所で定義する。
 // parseCost: 文字列を float64 に変換する
-func parseCost(cost string) (float64, error) {
+func (j *Job) parseCost(cost string) (float64, error) {
 	return strconv.ParseFloat(cost, 64)
 }

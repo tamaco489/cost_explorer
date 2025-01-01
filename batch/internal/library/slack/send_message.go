@@ -7,6 +7,19 @@ import (
 	"github.com/slack-go/slack"
 )
 
+// レポートタイトルの型を定義
+type ReportTitle string
+
+const (
+	DailyCostReportTitle  ReportTitle = "daily-cost-report"
+	WeeklyCostReportTitle ReportTitle = "weekly-cost-report"
+)
+
+// String: レポートタイトル型を文字列型に変換する
+func (rt ReportTitle) String() string {
+	return string(rt)
+}
+
 // SendMessage: slackにメッセージを送信する
 func (sc *slackClient) SendMessage(ctx context.Context, title string, attachment Attachment) error {
 	err := slack.PostWebhookContext(ctx, sc.webhookURL, &slack.WebhookMessage{
