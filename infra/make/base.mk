@@ -31,7 +31,7 @@ list:
 	export AWS_REGION=$(AWS_REGION) && \
 	terraform state list
 
-# e.g. make show AWS_RESOURCE=aws_acm_certificate.nautilus
+# $ make show AWS_RESOURCE=aws_lambda_function.cost_explorer
 show:
 	@export AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) && \
 	export AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) && \
