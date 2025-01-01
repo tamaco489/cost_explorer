@@ -32,6 +32,7 @@ data "aws_iam_policy_document" "cost_explorer" {
     actions = ["secretsmanager:GetSecretValue"]
     resources = [
       data.aws_secretsmanager_secret.slack_config.arn,
+      data.aws_secretsmanager_secret.exchange_rates_app_id.arn
     ]
   }
   statement {
