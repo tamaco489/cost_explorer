@@ -3,8 +3,8 @@ package usecase
 import (
 	"context"
 	"fmt"
-	"log"
 	"log/slog"
+	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/costexplorer"
@@ -16,6 +16,7 @@ import (
 
 func (j *Job) DailyCostReport(ctx context.Context) error {
 
+	// ************************* 1. 月初かどうかの判定 *************************
 	// NOTE: 検証用途として一時的に日付を書き換える
 	j.execTime = time.Date(2024, 12, 29, 0, 0, 0, 0, time.UTC)
 
@@ -28,8 +29,9 @@ func (j *Job) DailyCostReport(ctx context.Context) error {
 	fd := newFormattedDateForDailyReport(j.execTime)
 
 	// NOTE: debug log
-	fd.outputFormattedDateList(ctx)
+	fd.formattedDateLogs(ctx)
 
+	// ************************* 2. AWS 利用コストの算出 *************************
 	yesterdayCost, err := j.getYesterdayCost(ctx, fd.yesterday, fd.endDate)
 	if err != nil {
 		return fmt.Errorf("failed to get yesterday cost: %w", err)
@@ -45,25 +47,52 @@ func (j *Job) DailyCostReport(ctx context.Context) error {
 		return fmt.Errorf("failed to get forecast cost: %w", err)
 	}
 
-	report := newDailySlackReport(yesterdayCost, actualCost, forecastCost)
-	message := report.genSlackMessage()
+	// NOTE: debug log
+	getUsageCostLogs(ctx, yesterdayCost, actualCost, forecastCost)
 
-	// 基軸通貨をUSDで指定
-	baseCurrencyCode := exchange_rates.USD.String()
-	if !exchange_rates.ExchangeRatesCurrencyCode(baseCurrencyCode).Valid() {
-		return fmt.Errorf("invalid base currency: %s", baseCurrencyCode)
+	// ************************* 3. Open Exchange Rate API を使用して、現時点の為替レートを取得 *************************
+	pxr, err := j.exchangeRatesClient.PrepareExchangeRates()
+	if err != nil {
+		return err
 	}
 
-	// 変換対象に指定する通貨を選択
-	exchangeCurrencyCodes := []string{exchange_rates.JPY.String(), exchange_rates.EUR.String()}
-
-	// 為替レートを取得
-	ratesResponse, err := j.exchangeRatesClient.GetExchangeRates(baseCurrencyCode, exchangeCurrencyCodes)
+	ratesResponse, err := j.exchangeRatesClient.GetExchangeRates(pxr.BaseCurrencyCode, pxr.ExchangeCurrencyCodes)
 	if err != nil {
 		return fmt.Errorf("failed to get exchange rates: %w", err)
 	}
 
-	log.Println("[INFO] GetExchangeRates response:", ratesResponse)
+	// NOTE: debug log
+	exchangeRatesResponseLogs(ctx, ratesResponse)
+
+	// 現時点の為替レートを取得できたので、このJPYの値を基準値として、USDをJPYに変換する
+	// ************************* 4. 取得した為替レートを利用して、利用コストをUSDからJPYに変換 *************************
+
+	yesterdayCostFloat, err := strconv.ParseFloat(yesterdayCost, 64)
+	if err != nil {
+		return fmt.Errorf("failed to parse yesterdayCost to float64: %w", err)
+	}
+
+	actualCostFloat, err := strconv.ParseFloat(actualCost, 64)
+	if err != nil {
+		return fmt.Errorf("failed to parse actualCost to float64: %w", err)
+	}
+
+	forecastCostFloat, err := strconv.ParseFloat(forecastCost, 64)
+	if err != nil {
+		return fmt.Errorf("failed to parse forecast cost: %w", err)
+	}
+
+	usdToJpyRate := ratesResponse.Rates[exchange_rates.JPY.String()]
+	yesterdayCostJPY := yesterdayCostFloat * usdToJpyRate // 昨日利用したコスト
+	actualCostJPY := actualCostFloat * usdToJpyRate       // 本日時点で利用した総コスト
+	forecastCostJPY := forecastCostFloat * usdToJpyRate   // 残り日数を考慮した今月の利用コスト
+
+	// NOTE: debug log
+	parsedJPYCostLogs(ctx, yesterdayCostJPY, actualCostJPY, forecastCostJPY)
+
+	// ************************* 5. Slackにメッセージを送信する *************************
+	report := newDailySlackReport(yesterdayCost, actualCost, forecastCost)
+	message := report.genSlackMessage()
 
 	sc := slack.NewSlackClient(configuration.Get().Slack.DailyWebHookURL, configuration.Get().ServiceName)
 	if err := sc.SendMessage(ctx, slack.DailyReportTitle.String(), message); err != nil {
@@ -191,12 +220,38 @@ func (r dailySlackReport) genSlackMessage() slack.Attachment {
 }
 
 // NOTE: debug用のログ
-func (fd formattedDateForDailyReport) outputFormattedDateList(ctx context.Context) {
-	slog.InfoContext(ctx, "outputFormattedDateList:",
+func (fd formattedDateForDailyReport) formattedDateLogs(ctx context.Context) {
+	slog.InfoContext(ctx, "[1]. outputFormattedDateList:",
 		slog.String("昨日の日付", fd.yesterday),
 		slog.String("今月の開始日付", fd.startDate),
 		slog.String("今月の終了日付", fd.endDate),
 		slog.Int("今日までの日数", fd.currentDay),
 		slog.Int("今月の総日数", fd.daysInMonth),
+	)
+}
+
+// NOTE: debug用のログ
+func getUsageCostLogs(ctx context.Context, yesterdayCost, actualCost, forecastCost string) {
+	slog.InfoContext(ctx, "[2] get usage cost",
+		slog.String("yesterday", yesterdayCost), // 0.0217344233
+		slog.String("actual", actualCost),       // 0.7277853673
+		slog.String("forecast", forecastCost),   // 0.78
+	)
+}
+
+// NOTE: debug用のログ
+func exchangeRatesResponseLogs(ctx context.Context, r *exchange_rates.ExchangeRatesResponse) {
+	slog.InfoContext(ctx, "[3]. get exchange rates api response",
+		slog.Float64("EUR", r.Rates["EUR"]), // 0.966185
+		slog.Float64("JPY", r.Rates["JPY"]), // 157.35784932
+	)
+}
+
+// NOTE: debug用のログ
+func parsedJPYCostLogs(ctx context.Context, yesterdayCostJPY, actualCostJPY, forecastCostJPY float64) {
+	slog.InfoContext(ctx, "[4] parsed jpy cost",
+		slog.Float64("yesterday", yesterdayCostJPY), // 3.4200821066984974
+		slog.Float64("actual", actualCostJPY),       // 114.52274016489426
+		slog.Float64("forecast", forecastCostJPY),   // 122.73912246960002
 	)
 }
