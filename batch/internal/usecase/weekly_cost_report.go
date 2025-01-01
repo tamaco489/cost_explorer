@@ -24,14 +24,13 @@ func (j *Job) WeeklyCostReport(ctx context.Context) error {
 		return fmt.Errorf("failed to get week before last cost: %w", err)
 	}
 
-	percentageChange := calculatePercentageChange(lastWeekCost, weekBeforeLastCost)
+	percentageChange := j.calculatePercentageChange(lastWeekCost, weekBeforeLastCost)
 
 	report := newWeeklyCostReport(lastWeekCost, weekBeforeLastCost, percentageChange)
 	message := report.genSlackMessage()
 
-	const title = "weekly-cost-report"
 	sc := slack.NewSlackClient(configuration.Get().Slack.WeeklyWebHookURL, configuration.Get().ServiceName)
-	if err := sc.SendMessage(ctx, title, message); err != nil {
+	if err := sc.SendMessage(ctx, slack.WeeklyCostReportTitle.String(), message); err != nil {
 		return fmt.Errorf("failed to send slack message: %w", err)
 	}
 
@@ -103,15 +102,15 @@ func (j *Job) getWeekBeforeLastCost(ctx context.Context) (string, error) {
 }
 
 // calculatePercentageChange: コストの増減率を計算する
-func calculatePercentageChange(lastWeekCost, weekBeforeLastCost string) string {
+func (j *Job) calculatePercentageChange(lastWeekCost, weekBeforeLastCost string) string {
 
-	lastWeek, err := parseCost(lastWeekCost)
+	lastWeek, err := j.parseCost(lastWeekCost)
 	if err != nil {
 		log.Printf("failed to parse last week cost: %v", err)
 		return "0.0"
 	}
 
-	weekBeforeLast, err := parseCost(weekBeforeLastCost)
+	weekBeforeLast, err := j.parseCost(weekBeforeLastCost)
 	if err != nil {
 		log.Printf("failed to parse week before last cost: %v", err)
 		return "0.0"
