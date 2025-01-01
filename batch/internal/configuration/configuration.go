@@ -17,6 +17,9 @@ type Config struct {
 		DailyWebHookURL  string
 		WeeklyWebHookURL string
 	}
+	ExchangeRates struct {
+		AppID string
+	}
 	AWSConfig aws.Config
 }
 
@@ -39,18 +42,22 @@ func Load(ctx context.Context) (Config, error) {
 	defer cancel()
 
 	if err := loadAWSConf(ctx); err != nil {
-		return globalConfig, fmt.Errorf("failed to load aws config: %w", err)
+		return globalConfig, err
 	}
 
 	if err := loadSlackConfig(ctx, globalConfig, globalConfig.Env); err != nil {
-		return globalConfig, fmt.Errorf("failed to load slack config: %w", err)
+		return globalConfig, err
+	}
+
+	if err := loadExchangeRateAppID(ctx, globalConfig, globalConfig.Env); err != nil {
+		return globalConfig, err
 	}
 
 	return globalConfig, nil
 }
 
 func loadSlackConfig(ctx context.Context, cfg Config, env string) error {
-	secretName := fmt.Sprintf("cost-explorer/%s/slack", env)
+	secretName := fmt.Sprintf("cost-explorer/%s/slack/config", env)
 	result, err := getFromSecretsManager(ctx, cfg.AWSConfig, secretName)
 	if err != nil {
 		return fmt.Errorf("failed to get slack config: %w", err)
@@ -63,6 +70,18 @@ func loadSlackConfig(ctx context.Context, cfg Config, env string) error {
 
 	globalConfig.Slack.DailyWebHookURL = slackCfg.DailyWebHookURL
 	globalConfig.Slack.WeeklyWebHookURL = slackCfg.WeeklyWebHookURL
+
+	return nil
+}
+
+func loadExchangeRateAppID(ctx context.Context, cfg Config, env string) error {
+	secretName := fmt.Sprintf("cost-explorer/%s/exchange-rates/app-id", env)
+	appID, err := getFromSecretsManager(ctx, cfg.AWSConfig, secretName)
+	if err != nil {
+		return fmt.Errorf("failed to get exchange rates app id: %w", err)
+	}
+
+	globalConfig.ExchangeRates.AppID = appID
 
 	return nil
 }
