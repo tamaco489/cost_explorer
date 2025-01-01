@@ -14,6 +14,10 @@ import (
 
 func (j *Job) DailyCostReport(ctx context.Context) error {
 
+	// NOTE: 検証用途として一時的に日付を書き換える
+	// j.execTime = time.Date(2024, 12, 29, 0, 0, 0, 0, time.UTC)
+
+	// 月初の場合は処理をスキップ
 	if j.execTime.Day() == 1 {
 		slog.InfoContext(ctx, "no processing is performed at the beginning of the month")
 		return nil
