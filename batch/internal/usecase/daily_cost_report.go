@@ -3,19 +3,21 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log"
 	"log/slog"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/costexplorer"
 	"github.com/aws/aws-sdk-go-v2/service/costexplorer/types"
 	"github.com/tamaco489/cost_explorer/batch/internal/configuration"
+	"github.com/tamaco489/cost_explorer/batch/internal/library/exchange_rates"
 	"github.com/tamaco489/cost_explorer/batch/internal/library/slack"
 )
 
 func (j *Job) DailyCostReport(ctx context.Context) error {
 
 	// NOTE: 検証用途として一時的に日付を書き換える
-	// j.execTime = time.Date(2024, 12, 29, 0, 0, 0, 0, time.UTC)
+	j.execTime = time.Date(2024, 12, 29, 0, 0, 0, 0, time.UTC)
 
 	// 月初の場合は処理をスキップ
 	if j.execTime.Day() == 1 {
@@ -51,8 +53,25 @@ func (j *Job) DailyCostReport(ctx context.Context) error {
 	report := newDailySlackReport(yesterdayCost, actualCost, forecastCost)
 	message := report.genSlackMessage()
 
+	// 基軸通貨をUSDで指定
+	baseCurrencyCode := exchange_rates.USD.String()
+	if !exchange_rates.ExchangeRatesCurrencyCode(baseCurrencyCode).Valid() {
+		return fmt.Errorf("invalid base currency: %s", baseCurrencyCode)
+	}
+
+	// 変換対象に指定する通貨を選択
+	exchangeCurrencyCodes := []string{exchange_rates.JPY.String(), exchange_rates.EUR.String()}
+
+	// 為替レートを取得
+	ratesResponse, err := j.exchangeRatesClient.GetExchangeRates(baseCurrencyCode, exchangeCurrencyCodes)
+	if err != nil {
+		return fmt.Errorf("failed to get exchange rates: %w", err)
+	}
+
+	log.Println("[INFO] GetExchangeRates response:", ratesResponse)
+
 	sc := slack.NewSlackClient(configuration.Get().Slack.DailyWebHookURL, configuration.Get().ServiceName)
-	if err := sc.SendMessage(ctx, slack.DailyCostReportTitle.String(), message); err != nil {
+	if err := sc.SendMessage(ctx, slack.DailyReportTitle.String(), message); err != nil {
 		return fmt.Errorf("failed to send slack message: %w", err)
 	}
 
