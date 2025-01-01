@@ -45,7 +45,7 @@ func (j *Job) DailyCostReport(ctx context.Context) error {
 	}
 
 	if configuration.Get().Logging == "on" {
-		getUsageCostLogs(ctx, yesterdayCost, actualCost, forecastCost)
+		fd.getDailyUsageCostLogs(ctx, yesterdayCost, actualCost, forecastCost)
 	}
 
 	// ************************* 3. Open Exchange Rates API を使用して、為替レートを取得 *************************
@@ -60,7 +60,7 @@ func (j *Job) DailyCostReport(ctx context.Context) error {
 	}
 
 	if configuration.Get().Logging == "on" {
-		exchangeRatesResponseLogs(ctx, ratesResponse)
+		fd.exchangeRatesResponseLogs(ctx, ratesResponse)
 	}
 
 	// ************************* 4. 取得した為替レートを利用して、利用コストをUSDからJPYに変換 *************************
@@ -76,7 +76,7 @@ func (j *Job) DailyCostReport(ctx context.Context) error {
 	}
 
 	if configuration.Get().Logging == "on" {
-		parseJPYCostLogs(ctx, jpyUsage.yesterdayCost, jpyUsage.actualCost, jpyUsage.forecastCost)
+		fd.parseJPYCostLogs(ctx, jpyUsage.yesterdayCost, jpyUsage.actualCost, jpyUsage.forecastCost)
 	}
 
 	// ************************* 5. Slackにメッセージを送信する *************************
@@ -221,12 +221,12 @@ type parseDailyCostUsage struct {
 func (dcu *dailyCostUsage) parseDailyCostUsage() (*parseDailyCostUsage, error) {
 	yesterdayCost, err := strconv.ParseFloat(dcu.yesterdayCost, 64)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse yesterdayCost to float64: %w", err)
+		return nil, fmt.Errorf("failed to parse yesterday cost to float64: %w", err)
 	}
 
 	actualCost, err := strconv.ParseFloat(dcu.actualCost, 64)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse actualCost to float64: %w", err)
+		return nil, fmt.Errorf("failed to parse actual cost to float64: %w", err)
 	}
 
 	forecastCost, err := strconv.ParseFloat(dcu.forecastCost, 64)
@@ -269,7 +269,7 @@ func (r dailyCostUsage) genSlackMessage() slack.Attachment {
 
 // NOTE: debug用途のログ
 func (fd formattedDateForDailyReport) formattedDateLogs(ctx context.Context) {
-	slog.InfoContext(ctx, "[1]. formatted date:",
+	slog.InfoContext(ctx, "[1]. formatted date",
 		slog.String("昨日の日付", fd.yesterday),   // 2024-12-28
 		slog.String("今月の開始日付", fd.startDate), // 2024-12-01
 		slog.String("今月の終了日付", fd.endDate),   // 2024-12-29
@@ -278,22 +278,21 @@ func (fd formattedDateForDailyReport) formattedDateLogs(ctx context.Context) {
 	)
 }
 
-func getUsageCostLogs(ctx context.Context, yesterdayCost, actualCost, forecastCost string) {
-	slog.InfoContext(ctx, "[2] get usage cost",
+func (fd formattedDateForDailyReport) getDailyUsageCostLogs(ctx context.Context, yesterdayCost, actualCost, forecastCost string) {
+	slog.InfoContext(ctx, "[2] get daily cost usage",
 		slog.String("yesterday", yesterdayCost), // 0.0217344233
 		slog.String("actual", actualCost),       // 0.7277853673
 		slog.String("forecast", forecastCost),   // 0.78
 	)
 }
 
-func exchangeRatesResponseLogs(ctx context.Context, r *exchange_rates.ExchangeRatesResponse) {
+func (fd formattedDateForDailyReport) exchangeRatesResponseLogs(ctx context.Context, r *exchange_rates.ExchangeRatesResponse) {
 	slog.InfoContext(ctx, "[3]. get exchange rates api response",
-		slog.Float64("EUR", r.Rates["EUR"]), // 0.966185
 		slog.Float64("JPY", r.Rates["JPY"]), // 157.35784932
 	)
 }
 
-func parseJPYCostLogs(ctx context.Context, yesterdayCostJPY, actualCostJPY, forecastCostJPY string) {
+func (fd formattedDateForDailyReport) parseJPYCostLogs(ctx context.Context, yesterdayCostJPY, actualCostJPY, forecastCostJPY string) {
 	slog.InfoContext(ctx, "[4] parsed jpy cost",
 		slog.String("yesterday", yesterdayCostJPY), // 3.4200821066984974
 		slog.String("actual", actualCostJPY),       // 114.52274016489426
