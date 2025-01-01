@@ -16,11 +16,7 @@ import (
 
 func (j *Job) DailyCostReport(ctx context.Context) error {
 
-	// ************************* 1. 月初かどうかの判定 *************************
-	// NOTE: 検証用途として一時的に日付を書き換える
-	j.execTime = time.Date(2024, 12, 29, 0, 0, 0, 0, time.UTC)
-
-	// 月初の場合は処理をスキップ
+	// ************************* 1. 実行日時からコスト算出に必要な各基準日を取得 (月初の場合は処理をスキップ) *************************
 	if j.execTime.Day() == 1 {
 		slog.InfoContext(ctx, "no processing is performed at the beginning of the month")
 		return nil
@@ -110,7 +106,7 @@ func (j *Job) DailyCostReport(ctx context.Context) error {
 	return nil
 }
 
-// formattedDateForDailyReport: 日次コストレポートのための日時情報を保持する構造体
+// formattedDateForDailyReport: 日次コストレポートのための日時情報を保持する構造体。
 type formattedDateForDailyReport struct {
 	yesterday   string // 昨日の日付
 	startDate   string // 今月の開始日付
@@ -119,21 +115,33 @@ type formattedDateForDailyReport struct {
 	daysInMonth int    // 今月の総日数
 }
 
-// newFormattedDateForDailyReport: formattedDateForDailyReport のコンストラクタ
+// newFormattedDateForDailyReport: formattedDateForDailyReport のコンストラクタ。
+//
+// 実行日時からコスト算出に必要な各基準日を取得する。
+//
+// yesterday: 昨日の日付
+//
+// startDate: 今月の開始日付
+//
+// endDate: 今月の終了日付
+//
+// currentDay: 今日までの日数
+//
+// daysInMonth: 今月の総日数
 func newFormattedDateForDailyReport(execTime time.Time) formattedDateForDailyReport {
 	currentYear, currentMonth, _ := execTime.Date()
 	daysInMonth := time.Date(currentYear, currentMonth+1, 0, 0, 0, 0, 0, time.UTC).Day()
 
 	return formattedDateForDailyReport{
-		startDate:   time.Date(execTime.Year(), execTime.Month(), 1, 0, 0, 0, 0, time.UTC).Format("2006-01-02"),
 		yesterday:   execTime.AddDate(0, 0, -1).Format("2006-01-02"),
+		startDate:   time.Date(execTime.Year(), execTime.Month(), 1, 0, 0, 0, 0, time.UTC).Format("2006-01-02"),
 		endDate:     execTime.Format("2006-01-02"),
 		currentDay:  execTime.Day(),
 		daysInMonth: daysInMonth,
 	}
 }
 
-// getYesterdayCost: 昨日の利用コストを取得する
+// getYesterdayCost: 昨日の利用コストを取得する。
 func (j *Job) getYesterdayCost(ctx context.Context, yesterday, endDate string) (string, error) {
 
 	output, err := j.costExplorerClient.GetCostAndUsage(ctx, &costexplorer.GetCostAndUsageInput{
@@ -157,7 +165,7 @@ func (j *Job) getYesterdayCost(ctx context.Context, yesterday, endDate string) (
 	return "0.0", nil
 }
 
-// getActualCost: 本日時点での今月の利用コストを取得する
+// getActualCost: 本日時点での今月の利用コストを取得する。
 func (j *Job) getActualCost(ctx context.Context, startDate, endDate string) (string, error) {
 
 	output, err := j.costExplorerClient.GetCostAndUsage(ctx, &costexplorer.GetCostAndUsageInput{
@@ -181,7 +189,7 @@ func (j *Job) getActualCost(ctx context.Context, startDate, endDate string) (str
 	return "0.0", nil
 }
 
-// getForecastCost: 今月の利用コストの予測値を算出する
+// getForecastCost: 今月の利用コストの予測値を算出する。
 func (j *Job) getForecastCost(actualCost string, currentDay, daysInMonth int) (string, error) {
 
 	// コスト計算
@@ -199,14 +207,14 @@ func (j *Job) getForecastCost(actualCost string, currentDay, daysInMonth int) (s
 	return fmt.Sprintf("%.2f", forecastCost), nil
 }
 
-// dailySlackReport: 日次利用コストレポート向けのメッセージを生成するための構造体
+// dailySlackReport: 日次利用コストレポート向けのメッセージを生成するための構造体。
 type dailySlackReport struct {
 	yesterdayCost string
 	actualCost    string
 	forecastCost  string
 }
 
-// newDailySlackReport: 日次利用コストレポートを作成するためのコンストラクタ関数
+// newDailySlackReport: 日次利用コストレポートを作成するためのコンストラクタ。
 func newDailySlackReport(yesterdayCost, actualCost, forecastCost float64) dailySlackReport {
 	return dailySlackReport{
 		yesterdayCost: fmt.Sprintf("%.2f", yesterdayCost),
@@ -215,7 +223,7 @@ func newDailySlackReport(yesterdayCost, actualCost, forecastCost float64) dailyS
 	}
 }
 
-// genSlackMessage: 日次利用コストレポートのメッセージを生成する
+// genSlackMessage: 日次利用コストレポートのメッセージを生成する。
 func (r dailySlackReport) genSlackMessage() slack.Attachment {
 	return slack.Attachment{
 		Pretext: fmt.Sprintf(`
