@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/costexplorer"
 	"github.com/aws/aws-sdk-go-v2/service/costexplorer/types"
@@ -14,40 +15,59 @@ import (
 
 func (j *Job) WeeklyCostReport(ctx context.Context) error {
 
-	lastWeekCost, err := j.getLastWeekCost(ctx)
+	// NOTE: 検証用途として一時的に日付を書き換える
+	// j.execTime = time.Date(2024, 12, 29, 0, 0, 0, 0, time.UTC)
+
+	fd := newFormattedDateForWeeklyReport(j.execTime)
+
+	lastWeekCost, err := j.getLastWeekCost(ctx, fd.lastWeekStartDate, fd.lastWeekEndDate)
 	if err != nil {
 		return fmt.Errorf("failed to get last week cost: %w", err)
 	}
 
-	weekBeforeLastCost, err := j.getWeekBeforeLastCost(ctx)
+	weekBeforeLastCost, err := j.getWeekBeforeLastCost(ctx, fd.weekBeforeLastStartDate, fd.weekBeforeLastEndDate)
 	if err != nil {
 		return fmt.Errorf("failed to get week before last cost: %w", err)
 	}
 
-	percentageChange := calculatePercentageChange(lastWeekCost, weekBeforeLastCost)
+	percentageChange := j.calculatePercentageChange(lastWeekCost, weekBeforeLastCost)
 
-	report := newWeeklyCostReport(lastWeekCost, weekBeforeLastCost, percentageChange)
+	report := newWeeklySlackReport(lastWeekCost, weekBeforeLastCost, percentageChange)
 	message := report.genSlackMessage()
 
-	const title = "weekly-cost-report"
 	sc := slack.NewSlackClient(configuration.Get().Slack.WeeklyWebHookURL, configuration.Get().ServiceName)
-	if err := sc.SendMessage(ctx, title, message); err != nil {
+	if err := sc.SendMessage(ctx, slack.WeeklyCostReportTitle.String(), message); err != nil {
 		return fmt.Errorf("failed to send slack message: %w", err)
 	}
 
 	return nil
 }
 
-// getLastWeekCost: 先週の利用コストを取得する
-func (j *Job) getLastWeekCost(ctx context.Context) (string, error) {
+// formattedDateForWeeklyReport: 週次コストレポートのための日時情報を保持する構造体
+type formattedDateForWeeklyReport struct {
+	lastWeekStartDate       string // 先週の開始日付
+	lastWeekEndDate         string // 先週の終了日付
+	weekBeforeLastStartDate string // 先々週の開始日付
+	weekBeforeLastEndDate   string // 先々週の終了日付
+}
 
-	endDate := j.execTime.AddDate(0, 0, -7).Format("2006-01-02")
-	startDate := j.execTime.AddDate(0, 0, -13).Format("2006-01-02")
+// newFormattedDateForWeeklyReport: formattedDateForWeeklyReport のコンストラクタ
+func newFormattedDateForWeeklyReport(execTime time.Time) formattedDateForWeeklyReport {
+	return formattedDateForWeeklyReport{
+		lastWeekStartDate:       execTime.AddDate(0, 0, -13).Format("2006-01-02"),
+		lastWeekEndDate:         execTime.AddDate(0, 0, -7).Format("2006-01-02"),
+		weekBeforeLastStartDate: execTime.AddDate(0, 0, -20).Format("2006-01-02"),
+		weekBeforeLastEndDate:   execTime.AddDate(0, 0, -14).Format("2006-01-02"),
+	}
+}
+
+// getLastWeekCost: 先週の利用コストを取得する
+func (j *Job) getLastWeekCost(ctx context.Context, lastWeekStartDate, lastWeekEndDate string) (string, error) {
 
 	output, err := j.costExplorerClient.GetCostAndUsage(ctx, &costexplorer.GetCostAndUsageInput{
 		TimePeriod: &types.DateInterval{
-			Start: &startDate,
-			End:   &endDate,
+			Start: &lastWeekStartDate,
+			End:   &lastWeekEndDate,
 		},
 		Metrics:     []string{"UnblendedCost"},
 		Granularity: types.GranularityDaily,
@@ -71,15 +91,12 @@ func (j *Job) getLastWeekCost(ctx context.Context) (string, error) {
 }
 
 // getWeekBeforeLastCost: 先々週の利用コストを取得する
-func (j *Job) getWeekBeforeLastCost(ctx context.Context) (string, error) {
-
-	endDate := j.execTime.AddDate(0, 0, -14).Format("2006-01-02")
-	startDate := j.execTime.AddDate(0, 0, -20).Format("2006-01-02")
+func (j *Job) getWeekBeforeLastCost(ctx context.Context, weekBeforeLastStartDate, weekBeforeLastEndDate string) (string, error) {
 
 	output, err := j.costExplorerClient.GetCostAndUsage(ctx, &costexplorer.GetCostAndUsageInput{
 		TimePeriod: &types.DateInterval{
-			Start: &startDate,
-			End:   &endDate,
+			Start: &weekBeforeLastStartDate,
+			End:   &weekBeforeLastEndDate,
 		},
 		Metrics:     []string{"UnblendedCost"},
 		Granularity: types.GranularityDaily,
@@ -103,15 +120,15 @@ func (j *Job) getWeekBeforeLastCost(ctx context.Context) (string, error) {
 }
 
 // calculatePercentageChange: コストの増減率を計算する
-func calculatePercentageChange(lastWeekCost, weekBeforeLastCost string) string {
+func (j *Job) calculatePercentageChange(lastWeekCost, weekBeforeLastCost string) string {
 
-	lastWeek, err := parseCost(lastWeekCost)
+	lastWeek, err := j.parseCost(lastWeekCost)
 	if err != nil {
 		log.Printf("failed to parse last week cost: %v", err)
 		return "0.0"
 	}
 
-	weekBeforeLast, err := parseCost(weekBeforeLastCost)
+	weekBeforeLast, err := j.parseCost(weekBeforeLastCost)
 	if err != nil {
 		log.Printf("failed to parse week before last cost: %v", err)
 		return "0.0"
@@ -125,24 +142,24 @@ func calculatePercentageChange(lastWeekCost, weekBeforeLastCost string) string {
 	return fmt.Sprintf("%.2f", change)
 }
 
-// newWeeklyCostReport: 週次コストレポートを作成するためのコンストラクタ関数
-func newWeeklyCostReport(lastWeekCost, weekBeforeLastCost, percentageChange string) weeklyCostReport {
-	return weeklyCostReport{
+// weeklyCostReport: 週次利用コストレポート向けのメッセージを生成するための構造体
+type weeklySlackReport struct {
+	lastWeekCost       string
+	weekBeforeLastCost string
+	percentageChange   string
+}
+
+// newWeeklySlackReport: 週次コストレポートを作成するためのコンストラクタ関数
+func newWeeklySlackReport(lastWeekCost, weekBeforeLastCost, percentageChange string) weeklySlackReport {
+	return weeklySlackReport{
 		lastWeekCost:       lastWeekCost,
 		weekBeforeLastCost: weekBeforeLastCost,
 		percentageChange:   percentageChange,
 	}
 }
 
-// weeklyCostReport: 週次利用コストレポート向けのメッセージを生成するための構造体
-type weeklyCostReport struct {
-	lastWeekCost       string
-	weekBeforeLastCost string
-	percentageChange   string
-}
-
 // genSlackMessage: 週次利用コストレポートのメッセージを生成する
-func (r weeklyCostReport) genSlackMessage() slack.Attachment {
+func (r weeklySlackReport) genSlackMessage() slack.Attachment {
 	return slack.Attachment{
 		Pretext: fmt.Sprintf(`
 • 先週の利用コスト: %s USD
