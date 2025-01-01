@@ -27,13 +27,8 @@ func (j *Job) DailyCostReport(ctx context.Context) error {
 
 	fd := newFormattedDateForDailyReport(j.execTime)
 
-	slog.InfoContext(ctx, "Generated ReportDateInfo",
-		slog.String("昨日の日付", fd.yesterday),
-		slog.String("今月の開始日付", fd.startDate),
-		slog.String("今月の終了日付", fd.endDate),
-		slog.Int("今日までの日数", fd.currentDay),
-		slog.Int("今月の総日数", fd.daysInMonth),
-	)
+	// NOTE: debug log
+	fd.outputFormattedDateList(ctx)
 
 	yesterdayCost, err := j.getYesterdayCost(ctx, fd.yesterday, fd.endDate)
 	if err != nil {
@@ -193,4 +188,15 @@ func (r dailySlackReport) genSlackMessage() slack.Attachment {
 `, r.yesterdayCost, r.actualCost, r.forecastCost,
 		),
 	}
+}
+
+// NOTE: debug用のログ
+func (fd formattedDateForDailyReport) outputFormattedDateList(ctx context.Context) {
+	slog.InfoContext(ctx, "outputFormattedDateList:",
+		slog.String("昨日の日付", fd.yesterday),
+		slog.String("今月の開始日付", fd.startDate),
+		slog.String("今月の終了日付", fd.endDate),
+		slog.Int("今日までの日数", fd.currentDay),
+		slog.Int("今月の総日数", fd.daysInMonth),
+	)
 }
