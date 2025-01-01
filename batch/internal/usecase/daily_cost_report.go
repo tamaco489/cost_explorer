@@ -19,28 +19,27 @@ func (j *Job) DailyCostReport(ctx context.Context) error {
 		return nil
 	}
 
-	// 日時情報オブジェクトの生成
-	fmtDate := newDailyCostReportDateFormate(j.execTime)
+	fd := newFormattedDateForDailyReport(j.execTime)
 
 	slog.InfoContext(ctx, "Generated ReportDateInfo",
-		slog.String("startDate", fmtDate.StartDate),
-		slog.String("yesterday", fmtDate.Yesterday),
-		slog.String("endDate", fmtDate.EndDate),
-		slog.Int("currentDay", fmtDate.CurrentDay),
-		slog.Int("daysInMonth", fmtDate.DaysInMonth),
+		slog.String("昨日の日付", fd.yesterday),
+		slog.String("今月の開始日付", fd.startDate),
+		slog.String("今月の終了日付", fd.endDate),
+		slog.Int("今日までの日数", fd.currentDay),
+		slog.Int("今月の総日数", fd.daysInMonth),
 	)
 
-	yesterdayCost, err := j.getYesterdayCost(ctx, fmtDate.Yesterday, fmtDate.EndDate)
+	yesterdayCost, err := j.getYesterdayCost(ctx, fd.yesterday, fd.endDate)
 	if err != nil {
 		return fmt.Errorf("failed to get yesterday cost: %w", err)
 	}
 
-	actualCost, err := j.getActualCost(ctx, fmtDate.StartDate, fmtDate.EndDate)
+	actualCost, err := j.getActualCost(ctx, fd.startDate, fd.endDate)
 	if err != nil {
 		return fmt.Errorf("failed to get actual cost: %w", err)
 	}
 
-	forecastCost, err := j.getForecastCost(actualCost, fmtDate.CurrentDay, fmtDate.DaysInMonth)
+	forecastCost, err := j.getForecastCost(actualCost, fd.currentDay, fd.daysInMonth)
 	if err != nil {
 		return fmt.Errorf("failed to get forecast cost: %w", err)
 	}
@@ -56,26 +55,26 @@ func (j *Job) DailyCostReport(ctx context.Context) error {
 	return nil
 }
 
-// dailyCostReportDateFormate: 日次コストレポートのための日時情報を保持する構造体
-type dailyCostReportDateFormate struct {
-	StartDate   string // 今月の開始日付
-	Yesterday   string // 昨日の日付
-	EndDate     string // 今月の終了日付
-	CurrentDay  int    // 今日までの日数
-	DaysInMonth int    // 今月の総日数
+// formattedDateForDailyReport: 日次コストレポートのための日時情報を保持する構造体
+type formattedDateForDailyReport struct {
+	yesterday   string // 昨日の日付
+	startDate   string // 今月の開始日付
+	endDate     string // 今月の終了日付
+	currentDay  int    // 今日までの日数
+	daysInMonth int    // 今月の総日数
 }
 
-// newDailyCostReportDateFormate: ReportDateInfoのコンストラクタ
-func newDailyCostReportDateFormate(execTime time.Time) dailyCostReportDateFormate {
+// newFormattedDateForDailyReport: formattedDateForDailyReport のコンストラクタ
+func newFormattedDateForDailyReport(execTime time.Time) formattedDateForDailyReport {
 	currentYear, currentMonth, _ := execTime.Date()
 	daysInMonth := time.Date(currentYear, currentMonth+1, 0, 0, 0, 0, 0, time.UTC).Day()
 
-	return dailyCostReportDateFormate{
-		StartDate:   time.Date(execTime.Year(), execTime.Month(), 1, 0, 0, 0, 0, time.UTC).Format("2006-01-02"),
-		Yesterday:   execTime.AddDate(0, 0, -1).Format("2006-01-02"),
-		EndDate:     execTime.Format("2006-01-02"),
-		CurrentDay:  execTime.Day(),
-		DaysInMonth: daysInMonth,
+	return formattedDateForDailyReport{
+		startDate:   time.Date(execTime.Year(), execTime.Month(), 1, 0, 0, 0, 0, time.UTC).Format("2006-01-02"),
+		yesterday:   execTime.AddDate(0, 0, -1).Format("2006-01-02"),
+		endDate:     execTime.Format("2006-01-02"),
+		currentDay:  execTime.Day(),
+		daysInMonth: daysInMonth,
 	}
 }
 
