@@ -44,6 +44,26 @@ func NewExchangeClient() (*ExchangeRatesClient, error) {
 	return client, nil
 }
 
+// PrepareExchangeRates: GetExchangeRates を実行するにあたっての準備を行う
+//
+// 基軸通貨をUSDに設定し、変換対象通貨をJPYに限定
+func (erc *ExchangeRatesClient) PrepareExchangeRates() (*prepareExchangeRates, error) {
+	baseCurrencyCode := USD.String()
+	if !ExchangeRatesCurrencyCode(baseCurrencyCode).Valid() {
+		return nil, fmt.Errorf("invalid base currency: %s", baseCurrencyCode)
+	}
+
+	return &prepareExchangeRates{
+		BaseCurrencyCode:      baseCurrencyCode,
+		ExchangeCurrencyCodes: []string{JPY.String()},
+	}, nil
+}
+
+type prepareExchangeRates struct {
+	BaseCurrencyCode      string
+	ExchangeCurrencyCodes []string
+}
+
 // GetExchangeRates: 為替レートを取得する
 func (erc *ExchangeRatesClient) GetExchangeRates(baseCurrencyCode string, exchangeCurrencyCodes []string) (*ExchangeRatesResponse, error) {
 
