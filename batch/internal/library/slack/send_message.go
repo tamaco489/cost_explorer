@@ -7,12 +7,12 @@ import (
 	"github.com/slack-go/slack"
 )
 
-// レポートタイトルの型を定義
+// レポートタイトルの共通の型
 type ReportTitle string
 
 const (
-	DailyCostReportTitle  ReportTitle = "daily-cost-report"
-	WeeklyCostReportTitle ReportTitle = "weekly-cost-report"
+	DailyReportTitle  ReportTitle = "daily-cost-report"
+	WeeklyReportTitle ReportTitle = "weekly-cost-report"
 )
 
 // String: レポートタイトル型を文字列型に変換する

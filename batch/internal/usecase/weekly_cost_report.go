@@ -36,7 +36,7 @@ func (j *Job) WeeklyCostReport(ctx context.Context) error {
 	message := report.genSlackMessage()
 
 	sc := slack.NewSlackClient(configuration.Get().Slack.WeeklyWebHookURL, configuration.Get().ServiceName)
-	if err := sc.SendMessage(ctx, slack.WeeklyCostReportTitle.String(), message); err != nil {
+	if err := sc.SendMessage(ctx, slack.WeeklyReportTitle.String(), message); err != nil {
 		return fmt.Errorf("failed to send slack message: %w", err)
 	}
 
