@@ -4,11 +4,33 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/kelseyhightower/envconfig"
 )
+
+const (
+	baseSecretName          = "cost-explorer"
+	exchangeRatesSecretName = "exchange-rates/app-id"
+	slackConfigSecretName   = "slack/config"
+)
+
+var secretIdList []string
+
+func init() {
+	env := globalConfig.Env
+	secretIdList = []string{
+		generateSecretName(env, exchangeRatesSecretName),
+		generateSecretName(env, slackConfigSecretName),
+	}
+}
+
+func generateSecretName(env, secretName string) string {
+	secret := fmt.Sprintf("%s/%s/%s", baseSecretName, env, secretName)
+	return secret
+}
 
 type Config struct {
 	Env         string `envconfig:"ENV" default:"dev"`
@@ -24,11 +46,6 @@ type Config struct {
 	AWSConfig aws.Config
 }
 
-type slackConfig struct {
-	DailyWebHookURL  string `json:"daily_webhook_url"`
-	WeeklyWebHookURL string `json:"weekly_webhook_url"`
-}
-
 var globalConfig Config
 
 func Get() Config {
@@ -36,7 +53,6 @@ func Get() Config {
 }
 
 func Load(ctx context.Context) (Config, error) {
-
 	envconfig.MustProcess("", &globalConfig)
 
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -46,43 +62,51 @@ func Load(ctx context.Context) (Config, error) {
 		return globalConfig, err
 	}
 
-	if err := loadSlackConfig(ctx, globalConfig, globalConfig.Env); err != nil {
-		return globalConfig, err
-	}
-
-	if err := loadExchangeRateAppID(ctx, globalConfig, globalConfig.Env); err != nil {
+	if err := loadSecrets(ctx, globalConfig.AWSConfig, globalConfig.Env); err != nil {
 		return globalConfig, err
 	}
 
 	return globalConfig, nil
 }
 
-func loadSlackConfig(ctx context.Context, cfg Config, env string) error {
-	secretName := fmt.Sprintf("cost-explorer/%s/slack/config", env)
-	result, err := getFromSecretsManager(ctx, cfg.AWSConfig, secretName)
+func loadSecrets(ctx context.Context, awsConfig aws.Config, env string) error {
+	result, err := getFromSecretsManager(ctx, awsConfig, secretIdList)
 	if err != nil {
-		return fmt.Errorf("failed to get slack config: %w", err)
+		return err
 	}
 
-	var slackCfg slackConfig
-	if err := json.Unmarshal([]byte(result), &slackCfg); err != nil {
-		return fmt.Errorf("failed to parse slack config: %w", err)
-	}
+	for _, secret := range result.SecretValues {
+		switch *secret.Name {
+		case generateSecretName(env, slackConfigSecretName):
+			if err := parseAndSetSlackConfig(secret.SecretString); err != nil {
+				return err
+			}
 
-	globalConfig.Slack.DailyWebHookURL = slackCfg.DailyWebHookURL
-	globalConfig.Slack.WeeklyWebHookURL = slackCfg.WeeklyWebHookURL
+		case generateSecretName(env, exchangeRatesSecretName):
+			globalConfig.ExchangeRates.AppID = *secret.SecretString
+
+		default:
+			slog.WarnContext(ctx, "not found secret name",
+				slog.String("env", env),
+				slog.String("secret name", *secret.Name),
+			)
+		}
+	}
 
 	return nil
 }
 
-func loadExchangeRateAppID(ctx context.Context, cfg Config, env string) error {
-	secretName := fmt.Sprintf("cost-explorer/%s/exchange-rates/app-id", env)
-	appID, err := getFromSecretsManager(ctx, cfg.AWSConfig, secretName)
-	if err != nil {
-		return fmt.Errorf("failed to get exchange rates app id: %w", err)
+func parseAndSetSlackConfig(secretString *string) error {
+	var slackConfig struct {
+		DailyWebHookURL  string `json:"daily_webhook_url"`
+		WeeklyWebHookURL string `json:"weekly_webhook_url"`
+	}
+	if err := json.Unmarshal([]byte(*secretString), &slackConfig); err != nil {
+		return fmt.Errorf("failed to parse slack config: %w", err)
 	}
 
-	globalConfig.ExchangeRates.AppID = appID
+	globalConfig.Slack.DailyWebHookURL = slackConfig.DailyWebHookURL
+	globalConfig.Slack.WeeklyWebHookURL = slackConfig.WeeklyWebHookURL
 
 	return nil
 }

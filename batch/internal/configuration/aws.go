@@ -10,38 +10,26 @@ import (
 )
 
 func loadAWSConf(ctx context.Context) error {
-
 	const awsRegion = "ap-northeast-1"
 	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(awsRegion))
 	if err != nil {
 		return fmt.Errorf("failed to load aws config: %w", err)
 	}
-
 	globalConfig.AWSConfig = cfg
-
 	return nil
 }
 
-var awsSecretCache = make(map[string]string)
-
-func getFromSecretsManager(ctx context.Context, awsConfig aws.Config, secretName string) (string, error) {
-
-	c, exists := awsSecretCache[secretName]
-	if exists {
-		return c, nil
-	}
+func getFromSecretsManager(ctx context.Context, awsConfig aws.Config, secretIdList []string) (*secretsmanager.BatchGetSecretValueOutput, error) {
 
 	svc := secretsmanager.NewFromConfig(awsConfig)
-	input := &secretsmanager.GetSecretValueInput{
-		SecretId: aws.String(secretName),
+	input := &secretsmanager.BatchGetSecretValueInput{
+		SecretIdList: secretIdList,
 	}
 
-	result, err := svc.GetSecretValue(ctx, input)
+	result, err := svc.BatchGetSecretValue(ctx, input)
 	if err != nil {
-		return "", err
+		return nil, fmt.Errorf("failed to batch-get secrets: %w", err)
 	}
 
-	awsSecretCache[secretName] = *result.SecretString
-
-	return *result.SecretString, nil
+	return result, nil
 }
