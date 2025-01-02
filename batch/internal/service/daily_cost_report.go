@@ -6,7 +6,7 @@ import (
 	"github.com/tamaco489/cost_explorer/batch/internal/library/slack"
 )
 
-// DailyCostUsage: 日次レポートに必要な要素を含む構造体。
+// DailyCostUsage: 日次レポートに必要な要素を含む構造体
 type DailyCostUsage struct {
 	YesterdayCost float64
 	ActualCost    float64

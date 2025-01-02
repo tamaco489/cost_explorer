@@ -12,7 +12,7 @@ func init() {
 	}
 }
 
-// JST: jstタイムゾーンを返す。
+// JST: jstタイムゾーンを返却
 func JST() *time.Location {
 	return jst
 }

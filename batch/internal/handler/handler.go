@@ -21,9 +21,12 @@ func JobHandler(job usecase.Job) Job {
 
 		case "weeklyCostReport":
 			if err := job.WeeklyCostReport(ctx); err != nil {
-				slog.ErrorContext(ctx, "WeeklyCostReport job failed", slog.String("error", err.Error()))
+				slog.ErrorContext(ctx, "weeklyCostReport job failed", slog.String("error", err.Error()))
 				return err
 			}
+
+		case "monthlyCostReport":
+			slog.InfoContext(ctx, "monthlyCostReport job  is not yet implemented", slog.String("type", event.Type))
 
 		default:
 			slog.DebugContext(ctx, "skip to process", slog.String("type:", event.Type))

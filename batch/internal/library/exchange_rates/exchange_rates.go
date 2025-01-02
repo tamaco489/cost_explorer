@@ -44,7 +44,7 @@ func NewExchangeClient() (*ExchangeRatesClient, error) {
 	return client, nil
 }
 
-// PrepareExchangeRates: GetExchangeRates を実行するにあたっての準備を行う
+// PrepareExchangeRates: GetExchangeRates を実行するにあたっての準備
 //
 // 基軸通貨をUSDに設定し、変換対象通貨をJPYに限定
 func (erc *ExchangeRatesClient) PrepareExchangeRates() (*prepareExchangeRates, error) {
@@ -64,7 +64,7 @@ type prepareExchangeRates struct {
 	ExchangeCurrencyCodes []string
 }
 
-// GetExchangeRates: 為替レートを取得する
+// GetExchangeRates: 為替レートを取得
 func (erc *ExchangeRatesClient) GetExchangeRates(baseCurrencyCode string, exchangeCurrencyCodes []string) (*ExchangeRatesResponse, error) {
 
 	symbolsParam := strings.Join(exchangeCurrencyCodes, ",")

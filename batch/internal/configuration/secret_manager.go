@@ -11,7 +11,6 @@ import (
 
 // loadSecrets: AWS Secret Manager からシークレットを取得
 func loadSecrets(ctx context.Context, cfg Config) error {
-
 	secretIDList := cfg.newSecretIDList()
 	result, err := cfg.getFromSecretsManager(ctx, secretIDList)
 	if err != nil {
@@ -54,12 +53,10 @@ func (sn secretName) String() string {
 
 // newSecretIDList: AWS Secret Manager に設定しているシークレットIDのリストを生成
 func (cfg Config) newSecretIDList() []string {
-	secretIDList := []string{
+	return []string{
 		cfg.genSecretID(exchangeRatesAppID.String()),
 		cfg.genSecretID(slackConfig.String()),
 	}
-
-	return secretIDList
 }
 
 // genSecretID: サービス名、環境名、シークレット名からシークレットIDを生成
@@ -69,7 +66,6 @@ func (cfg Config) genSecretID(secretName string) string {
 
 // getFromSecretsManager: AWS Secret Manager に登録したシークレットをbatchで取得
 func (cfg Config) getFromSecretsManager(ctx context.Context, secretIDList []string) (*secretsmanager.BatchGetSecretValueOutput, error) {
-
 	svc := secretsmanager.NewFromConfig(cfg.AWSConfig)
 	input := &secretsmanager.BatchGetSecretValueInput{
 		SecretIdList: secretIDList,
@@ -85,7 +81,6 @@ func (cfg Config) getFromSecretsManager(ctx context.Context, secretIDList []stri
 
 // parseAndSetSlackConfig: slack config はjson型で登録しているため、予め定義した構造体にマッピングする
 func parseAndSetSlackConfig(secretString *string) error {
-
 	var slackConfig struct {
 		DailyWebHookURL  string `json:"daily_webhook_url"`
 		WeeklyWebHookURL string `json:"weekly_webhook_url"`
