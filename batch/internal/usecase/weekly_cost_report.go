@@ -8,17 +8,18 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/service/costexplorer"
 	"github.com/aws/aws-sdk-go-v2/service/costexplorer/types"
 	"github.com/tamaco489/cost_explorer/batch/internal/configuration"
 	"github.com/tamaco489/cost_explorer/batch/internal/library/exchange_rates"
 	"github.com/tamaco489/cost_explorer/batch/internal/library/slack"
+
+	cost_explorer "github.com/aws/aws-sdk-go-v2/service/costexplorer"
 )
 
 func (j *Job) WeeklyCostReport(ctx context.Context) error {
 
 	// ************************* 1. 実行日時からコスト算出に必要な各基準日を取得 *************************
-	fd := newFormattedDateForWeeklyReport(j.execTime)
+	fd := newFormattedDateForWeeklyReport(j.execTimeJST)
 
 	if configuration.Get().Logging == "on" {
 		fd.formattedDateLogs(ctx)
@@ -114,7 +115,7 @@ func newFormattedDateForWeeklyReport(execTime time.Time) formattedDateForWeeklyR
 // getLastWeekCost: 先週の利用コストを取得
 func (j *Job) getLastWeekCost(ctx context.Context, lastWeekStartDate, lastWeekEndDate string) (string, error) {
 
-	output, err := j.costExplorerClient.GetCostAndUsage(ctx, &costexplorer.GetCostAndUsageInput{
+	output, err := j.costExplorerClient.GetCostAndUsage(ctx, &cost_explorer.GetCostAndUsageInput{
 		TimePeriod: &types.DateInterval{
 			Start: &lastWeekStartDate,
 			End:   &lastWeekEndDate,
@@ -143,7 +144,7 @@ func (j *Job) getLastWeekCost(ctx context.Context, lastWeekStartDate, lastWeekEn
 // getWeekBeforeLastCost: 先々週の利用コストを取得
 func (j *Job) getWeekBeforeLastCost(ctx context.Context, weekBeforeLastStartDate, weekBeforeLastEndDate string) (string, error) {
 
-	output, err := j.costExplorerClient.GetCostAndUsage(ctx, &costexplorer.GetCostAndUsageInput{
+	output, err := j.costExplorerClient.GetCostAndUsage(ctx, &cost_explorer.GetCostAndUsageInput{
 		TimePeriod: &types.DateInterval{
 			Start: &weekBeforeLastStartDate,
 			End:   &weekBeforeLastEndDate,

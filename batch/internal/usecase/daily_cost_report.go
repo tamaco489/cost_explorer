@@ -7,22 +7,29 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/service/costexplorer"
 	"github.com/aws/aws-sdk-go-v2/service/costexplorer/types"
 	"github.com/tamaco489/cost_explorer/batch/internal/configuration"
 	"github.com/tamaco489/cost_explorer/batch/internal/library/exchange_rates"
 	"github.com/tamaco489/cost_explorer/batch/internal/library/slack"
+
+	cost_explorer "github.com/aws/aws-sdk-go-v2/service/costexplorer"
 )
 
 func (j *Job) DailyCostReport(ctx context.Context) error {
 
 	// ************************* 1. 実行日時からコスト算出に必要な各基準日を取得 (月初の場合は処理をスキップ) *************************
-	if j.execTime.Day() == 1 {
-		slog.InfoContext(ctx, "no processing is performed at the beginning of the month")
+	slog.InfoContext(ctx, "DailyCostReport",
+		slog.String("date (jst)", j.execTimeJST.Format("2006-01-02 15:04:05 MST")),
+	)
+
+	if j.execTimeJST.Day() == 1 {
+		slog.InfoContext(ctx, "no processing is performed at the beginning of the month",
+			slog.String("date (jst)", j.execTimeJST.Format("2006-01-02 15:04:05 MST")),
+		)
 		return nil
 	}
 
-	fd := newFormattedDateForDailyReport(j.execTime)
+	fd := newFormatDateForDailyReport(j.execTimeJST)
 
 	if configuration.Get().Logging == "on" {
 		fd.formattedDateLogs(ctx)
@@ -98,7 +105,7 @@ type formattedDateForDailyReport struct {
 	daysInMonth int    // 今月の総日数
 }
 
-// newFormattedDateForDailyReport: formattedDateForDailyReport のコンストラクタ
+// newFormatDateForDailyReport: formattedDateForDailyReport のコンストラクタ
 //
 // 実行日時からコスト算出に必要な各基準日を取得
 //
@@ -111,7 +118,7 @@ type formattedDateForDailyReport struct {
 // currentDay: 今日までの日数 (int)
 //
 // daysInMonth: 今月の総日数 (int)
-func newFormattedDateForDailyReport(execTime time.Time) formattedDateForDailyReport {
+func newFormatDateForDailyReport(execTime time.Time) formattedDateForDailyReport {
 	currentYear, currentMonth, _ := execTime.Date()
 	daysInMonth := time.Date(currentYear, currentMonth+1, 0, 0, 0, 0, 0, time.UTC).Day()
 
@@ -127,7 +134,7 @@ func newFormattedDateForDailyReport(execTime time.Time) formattedDateForDailyRep
 // getYesterdayCost: 昨日の利用コストを取得
 func (j *Job) getYesterdayCost(ctx context.Context, yesterday, endDate string) (string, error) {
 
-	output, err := j.costExplorerClient.GetCostAndUsage(ctx, &costexplorer.GetCostAndUsageInput{
+	output, err := j.costExplorerClient.GetCostAndUsage(ctx, &cost_explorer.GetCostAndUsageInput{
 		TimePeriod: &types.DateInterval{
 			Start: &yesterday,
 			End:   &endDate,
@@ -151,7 +158,7 @@ func (j *Job) getYesterdayCost(ctx context.Context, yesterday, endDate string) (
 // getActualCost: 本日時点での今月の利用コストを取得
 func (j *Job) getActualCost(ctx context.Context, startDate, endDate string) (string, error) {
 
-	output, err := j.costExplorerClient.GetCostAndUsage(ctx, &costexplorer.GetCostAndUsageInput{
+	output, err := j.costExplorerClient.GetCostAndUsage(ctx, &cost_explorer.GetCostAndUsageInput{
 		TimePeriod: &types.DateInterval{
 			Start: &startDate,
 			End:   &endDate,

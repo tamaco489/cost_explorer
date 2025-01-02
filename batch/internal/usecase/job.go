@@ -6,9 +6,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/service/costexplorer"
 	"github.com/tamaco489/cost_explorer/batch/internal/configuration"
 	"github.com/tamaco489/cost_explorer/batch/internal/library/exchange_rates"
+	"github.com/tamaco489/cost_explorer/batch/internal/library/timex"
+
+	cost_explorer "github.com/aws/aws-sdk-go-v2/service/costexplorer"
 )
 
 type Jobber interface {
@@ -19,22 +21,27 @@ type Jobber interface {
 var _ Jobber = (*Job)(nil)
 
 type Job struct {
-	execTime            time.Time
-	costExplorerClient  *costexplorer.Client
+	execTimeJST         time.Time
+	costExplorerClient  *cost_explorer.Client
 	exchangeRatesClient *exchange_rates.ExchangeRatesClient
 }
 
 func NewJob(cfg configuration.Config) (*Job, error) {
 
-	execTime := time.Now()
-	costExplorerClient := costexplorer.NewFromConfig(cfg.AWSConfig)
-	exchangeRatesClient, err := exchange_rates.NewExchangeClient() // NOTE: ここでAPP_IDを指定
+	// time
+	execTimeJST := time.Now().In(timex.JST())
+
+	// cost explorer sdk
+	costExplorerClient := cost_explorer.NewFromConfig(cfg.AWSConfig)
+
+	// open exchange rates api client
+	exchangeRatesClient, err := exchange_rates.NewExchangeClient()
 	if err != nil {
 		return nil, err
 	}
 
 	return &Job{
-		execTime:            execTime,
+		execTimeJST:         execTimeJST,
 		costExplorerClient:  costExplorerClient,
 		exchangeRatesClient: exchangeRatesClient,
 	}, nil
