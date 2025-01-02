@@ -38,9 +38,9 @@ func DailyUsageCostLogs(ctx context.Context, yesterdayCost, actualCost, forecast
 
 func WeeklyUsageCostLogs(ctx context.Context, lastWeekCost, weekBeforeLastCost, percentageChange float64) {
 	slog.InfoContext(ctx, "[2] get weekly usage cost",
-		slog.Float64("last week cost", lastWeekCost),              // 0.03
-		slog.Float64("week before last cost", weekBeforeLastCost), // 0.03
-		slog.Float64("percentage change", percentageChange),       // 0.00
+		slog.Float64("last week cost", lastWeekCost),              // 0.027573460300000005
+		slog.Float64("week before last cost", weekBeforeLastCost), // 0.0291809323
+		slog.Float64("percentage change", percentageChange),       // -5.508638255536459
 	)
 }
 

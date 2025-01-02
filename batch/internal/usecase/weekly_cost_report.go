@@ -118,7 +118,7 @@ func (wcu *weeklyCostUsage) genSlackMessage() slack.Attachment {
 		Pretext: fmt.Sprintf(`
 • 先週の利用コスト: %.2f 円
 • 先々週の利用コスト: %.2f 円
-• 先週と先々週のコスト増減: %.2f %%`,
+• 先々週のコストに対する先週のコスト: %.2f %%`,
 			wcu.lastWeekCost, wcu.weekBeforeLastCost, wcu.percentageChange,
 		),
 	}

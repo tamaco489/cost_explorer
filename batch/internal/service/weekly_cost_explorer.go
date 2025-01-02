@@ -82,7 +82,7 @@ func (s *WeeklyCostExplorerService) CalcPercentageChange(ctx context.Context, la
 		return 0, fmt.Errorf("week before last cost is zero")
 	}
 
-	change := ((lastWeekCost - weekBeforeLastCost) / weekBeforeLastCost) * 100
+	change := (lastWeekCost / weekBeforeLastCost) * 100
 
 	return change, nil
 }
