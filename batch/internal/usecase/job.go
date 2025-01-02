@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"math"
 	"time"
 
 	"github.com/tamaco489/cost_explorer/batch/internal/configuration"
@@ -49,10 +48,4 @@ func NewJob(cfg configuration.Config) (*Job, error) {
 		weeklyCostExplorerService: weeklyCostExplorerService,
 		exchangeRatesClient:       exchangeRatesClient,
 	}, nil
-}
-
-// roundUpToTwoDecimalPlaces: float64 の値を小数点以下2桁で切り上げる。
-func roundUpToTwoDecimalPlaces(value float64) float64 {
-	factor := math.Pow(10, 2)
-	return math.Ceil(value*factor) / factor
 }

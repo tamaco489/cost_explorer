@@ -7,7 +7,6 @@ import (
 
 	"github.com/tamaco489/cost_explorer/batch/internal/configuration"
 	"github.com/tamaco489/cost_explorer/batch/internal/library/debug_log"
-	"github.com/tamaco489/cost_explorer/batch/internal/library/exchange_rates"
 	"github.com/tamaco489/cost_explorer/batch/internal/library/slack"
 )
 
@@ -59,67 +58,25 @@ func (j *Job) WeeklyCostReport(ctx context.Context) error {
 	}
 
 	// ************************* 4. 取得した為替レートを利用して、利用コストをUSDからJPYに変換 *************************
-	costUsage := newWeeklyCostUsage(lastWeekCost, weekBeforeLastCost, percentageChange)
-	jpyUsage, err := costUsage.calcWeeklyCostInJPY(ratesResponse)
+	costUsage := j.weeklyCostExplorerService.NewWeeklyCostUsage(lastWeekCost, weekBeforeLastCost, percentageChange)
+	jpyUsage, err := costUsage.CalcWeeklyCostInJPY(ratesResponse)
 	if err != nil {
 		return err
 	}
 
 	if configuration.Get().Logging == "on" {
-		debug_log.WeeklyParseJPYCostLogs(ctx, jpyUsage.lastWeekCost, jpyUsage.weekBeforeLastCost)
+		debug_log.WeeklyParseJPYCostLogs(ctx, jpyUsage.LastWeekCost, jpyUsage.WeekBeforeLastCost)
 	}
 
 	// note: 値の受け渡しを行う
-	jpyUsage.percentageChange = costUsage.percentageChange
+	jpyUsage.PercentageChange = costUsage.PercentageChange
 
 	// ************************* 5. Slackにメッセージを送信する *************************
-	message := jpyUsage.genSlackMessage()
+	message := jpyUsage.GenWeeklySlackMessage()
 	sc := slack.NewSlackClient(configuration.Get().Slack.WeeklyWebHookURL, configuration.Get().ServiceName)
 	if err := sc.SendMessage(ctx, slack.WeeklyReportTitle.String(), message); err != nil {
 		return fmt.Errorf("failed to send slack message: %w", err)
 	}
 
 	return nil
-}
-
-// weeklyCostUsage: 週次レポートに必要な要素を含む構造体
-type weeklyCostUsage struct {
-	lastWeekCost       float64
-	weekBeforeLastCost float64
-	percentageChange   float64
-}
-
-// newWeeklyCostUsage: weeklyCostUsage のコンストラクタ
-func newWeeklyCostUsage(lastWeekCost, weekBeforeLastCost, percentageChange float64) *weeklyCostUsage {
-	return &weeklyCostUsage{
-		lastWeekCost:       lastWeekCost,
-		weekBeforeLastCost: weekBeforeLastCost,
-		percentageChange:   percentageChange,
-	}
-}
-
-// calcWeeklyCostInJPY: Open Exchange Rates APIのレスポンスから1$あたりの円を取得し、そのレートを使用して利用コストをUSDからJPYに変換
-func (wcu *weeklyCostUsage) calcWeeklyCostInJPY(res *exchange_rates.ExchangeRatesResponse) (*weeklyCostUsage, error) {
-	rate, ok := res.Rates[exchange_rates.JPY.String()]
-	if !ok {
-		return nil, fmt.Errorf("JPY exchange rate not found in the response: %+v", res.Rates)
-	}
-
-	return &weeklyCostUsage{
-		lastWeekCost:       roundUpToTwoDecimalPlaces(wcu.lastWeekCost * rate),       // 先週利用したコスト
-		weekBeforeLastCost: roundUpToTwoDecimalPlaces(wcu.weekBeforeLastCost * rate), // 先々週利用した総コスト
-		percentageChange:   wcu.percentageChange,                                     // 先週と先々週のコスト増減（%）
-	}, nil
-}
-
-// genSlackMessage: 週次利用コストレポートのメッセージを生成する
-func (wcu *weeklyCostUsage) genSlackMessage() slack.Attachment {
-	return slack.Attachment{
-		Pretext: fmt.Sprintf(`
-• 先週の利用コスト: %.2f 円
-• 先々週の利用コスト: %.2f 円
-• 先々週のコストに対する先週のコスト: %.2f %%`,
-			wcu.lastWeekCost, wcu.weekBeforeLastCost, wcu.percentageChange,
-		),
-	}
 }
