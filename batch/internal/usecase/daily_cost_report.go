@@ -73,7 +73,7 @@ func (j *Job) DailyCostReport(ctx context.Context) error {
 	}
 
 	if configuration.Get().Logging == "on" {
-		debug_log.ParseJPYCostLogs(ctx, jpyUsage.yesterdayCost, jpyUsage.actualCost, jpyUsage.forecastCost)
+		debug_log.DailyParseJPYCostLogs(ctx, jpyUsage.yesterdayCost, jpyUsage.actualCost, jpyUsage.forecastCost)
 	}
 
 	// ************************* 5. Slackにメッセージを送信する *************************

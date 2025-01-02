@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 	"math"
-	"strconv"
 	"time"
 
 	"github.com/tamaco489/cost_explorer/batch/internal/configuration"
@@ -22,10 +21,10 @@ type Jobber interface {
 var _ Jobber = (*Job)(nil)
 
 type Job struct {
-	execTimeJST              time.Time
-	costExplorerClient       *cost_explorer.Client // todo: weeklyのserviceの定義ができたら消す。
-	dailyCostExplorerService *service.DailyCostExplorerService
-	exchangeRatesClient      *exchange_rates.ExchangeRatesClient
+	execTimeJST               time.Time
+	dailyCostExplorerService  *service.DailyCostExplorerService
+	weeklyCostExplorerService *service.WeeklyCostExplorerService
+	exchangeRatesClient       *exchange_rates.ExchangeRatesClient
 }
 
 func NewJob(cfg configuration.Config) (*Job, error) {
@@ -36,6 +35,7 @@ func NewJob(cfg configuration.Config) (*Job, error) {
 	// cost explorer sdk
 	costExplorerClient := cost_explorer.NewFromConfig(cfg.AWSConfig)
 	dailyCostExplorerService := service.NewDailyCostExplorerService(costExplorerClient)
+	weeklyCostExplorerService := service.NewWeeklyCostExplorerService(costExplorerClient)
 
 	// open exchange rates api client
 	exchangeRatesClient, err := exchange_rates.NewExchangeClient()
@@ -44,17 +44,11 @@ func NewJob(cfg configuration.Config) (*Job, error) {
 	}
 
 	return &Job{
-		execTimeJST:              execTimeJST,
-		costExplorerClient:       costExplorerClient, // todo: weeklyのserviceの定義ができたら消す。
-		dailyCostExplorerService: dailyCostExplorerService,
-		exchangeRatesClient:      exchangeRatesClient,
+		execTimeJST:               execTimeJST,
+		dailyCostExplorerService:  dailyCostExplorerService,
+		weeklyCostExplorerService: weeklyCostExplorerService,
+		exchangeRatesClient:       exchangeRatesClient,
 	}, nil
-}
-
-// FIXME: 競合するので一旦退避。より適切な場所で定義する。
-// parseCost: 文字列を float64 に変換する
-func (j *Job) parseCost(cost string) (float64, error) {
-	return strconv.ParseFloat(cost, 64)
 }
 
 // roundUpToTwoDecimalPlaces: float64 の値を小数点以下2桁で切り上げる。

@@ -19,11 +19,28 @@ func FormatDateForDailyReportLogs(ctx context.Context, fd service.DailyReportDat
 	)
 }
 
+func FormatDateForWeeklyReportLogs(ctx context.Context, wd service.WeeklyReportDateFormatter) {
+	slog.InfoContext(ctx, "[1] formatted date",
+		slog.String("先週の開始日付", wd.LastWeekStartDate),        // 2024-12-19
+		slog.String("先週の終了日付", wd.LastWeekEndDate),          // 2024-12-25
+		slog.String("先々週の開始日付", wd.WeekBeforeLastStartDate), // 2024-12-12
+		slog.String("先々週の終了日付", wd.WeekBeforeLastEndDate),   // 2024-12-18
+	)
+}
+
 func DailyUsageCostLogs(ctx context.Context, yesterdayCost, actualCost, forecastCost float64) {
 	slog.InfoContext(ctx, "[2] get daily cost usage",
 		slog.Float64("yesterday", yesterdayCost), // 0.0217344233
 		slog.Float64("actual", actualCost),       // 0.7277853673
 		slog.Float64("forecast", forecastCost),   // 0.78
+	)
+}
+
+func WeeklyUsageCostLogs(ctx context.Context, lastWeekCost, weekBeforeLastCost, percentageChange float64) {
+	slog.InfoContext(ctx, "[2] get weekly usage cost",
+		slog.Float64("last week cost", lastWeekCost),              // 0.03
+		slog.Float64("week before last cost", weekBeforeLastCost), // 0.03
+		slog.Float64("percentage change", percentageChange),       // 0.00
 	)
 }
 
@@ -33,10 +50,17 @@ func ExchangeRatesResponseLogs(ctx context.Context, r *exchange_rates.ExchangeRa
 	)
 }
 
-func ParseJPYCostLogs(ctx context.Context, yesterdayCostJPY, actualCostJPY, forecastCostJPY float64) {
+func DailyParseJPYCostLogs(ctx context.Context, yesterdayCostJPY, actualCostJPY, forecastCostJPY float64) {
 	slog.InfoContext(ctx, "[4] parsed jpy cost",
 		slog.Float64("yesterday", yesterdayCostJPY), // 3.4200821066984974
 		slog.Float64("actual", actualCostJPY),       // 114.52274016489426
 		slog.Float64("forecast", forecastCostJPY),   // 122.73912246960002
+	)
+}
+
+func WeeklyParseJPYCostLogs(ctx context.Context, lastWeekCost, weekBeforeLastCost float64) {
+	slog.InfoContext(ctx, "[4] parsed jpy cost",
+		slog.Float64("last week cost", lastWeekCost),              // 4.73
+		slog.Float64("week before last cost", weekBeforeLastCost), // 4.73
 	)
 }

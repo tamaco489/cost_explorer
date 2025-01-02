@@ -1,8 +1,6 @@
 package service
 
-import (
-	"time"
-)
+import "time"
 
 // DailyReportDateFormatter: 日次コストレポートのための日時情報を保持する構造体
 type DailyReportDateFormatter struct {
@@ -13,20 +11,28 @@ type DailyReportDateFormatter struct {
 	DaysInMonth int    // 今月の総日数
 }
 
+// WeeklyReportDateFormatter: 週次コストレポートのための日時情報を保持する構造体
+type WeeklyReportDateFormatter struct {
+	LastWeekStartDate       string // 先週の開始日付
+	LastWeekEndDate         string // 先週の終了日付
+	WeekBeforeLastStartDate string // 先々週の開始日付
+	WeekBeforeLastEndDate   string // 先々週の終了日付
+}
+
 // NewDailyReportDateFormatter: DailyReportDateFormatter のコンストラクタ
 //
 // 実行日時からコスト算出に必要な各基準日を取得
 //
-// yesterday: 昨日の日付 (string)
+// Yesterday: 昨日の日付 (string)
 //
-// startDate: 今月の開始日付 (string)
+// StartDate: 今月の開始日付 (string)
 //
-// endDate: 今月の終了日付 (string)
+// EndDate: 今月の終了日付 (string)
 //
-// currentDay: 今日までの日数 (int)
+// CurrentDay: 今日までの日数 (int)
 //
-// daysInMonth: 今月の総日数 (int)
-func (s *DailyCostExplorerService) NewDailyReportDateFormatter(execTime time.Time) DailyReportDateFormatter {
+// DaysInMonth: 今月の総日数 (int)
+func (ds *DailyCostExplorerService) NewDailyReportDateFormatter(execTime time.Time) DailyReportDateFormatter {
 	currentYear, currentMonth, _ := execTime.Date()
 	daysInMonth := time.Date(currentYear, currentMonth+1, 0, 0, 0, 0, 0, time.UTC).Day()
 
@@ -36,5 +42,23 @@ func (s *DailyCostExplorerService) NewDailyReportDateFormatter(execTime time.Tim
 		EndDate:     execTime.Format("2006-01-02"),
 		CurrentDay:  execTime.Day(),
 		DaysInMonth: daysInMonth,
+	}
+}
+
+// NewWeeklyReportDateFormatter: WeeklyReportDateFormatter のコンストラクタ
+//
+// lastWeekStartDate: 先週の開始日付 (string)
+//
+// lastWeekEndDate: 先週の終了日付 (string)
+//
+// weekBeforeLastStartDate: 先々週の開始日付 (string)
+//
+// weekBeforeLastEndDate: 先々週の終了日付 (string)
+func (ws *WeeklyCostExplorerService) NewWeeklyReportDateFormatter(execTime time.Time) WeeklyReportDateFormatter {
+	return WeeklyReportDateFormatter{
+		LastWeekStartDate:       execTime.AddDate(0, 0, -13).Format("2006-01-02"),
+		LastWeekEndDate:         execTime.AddDate(0, 0, -7).Format("2006-01-02"),
+		WeekBeforeLastStartDate: execTime.AddDate(0, 0, -20).Format("2006-01-02"),
+		WeekBeforeLastEndDate:   execTime.AddDate(0, 0, -14).Format("2006-01-02"),
 	}
 }
