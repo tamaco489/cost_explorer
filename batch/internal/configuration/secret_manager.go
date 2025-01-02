@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
+// loadSecrets: AWS Secret Manager からシークレットを取得
 func loadSecrets(ctx context.Context, cfg Config) error {
 
 	secretIDList := cfg.newSecretIDList()
@@ -38,6 +39,7 @@ func loadSecrets(ctx context.Context, cfg Config) error {
 	return nil
 }
 
+// AWS Secret Manager のシークレット名の共通の型
 type secretName string
 
 const (
@@ -45,10 +47,12 @@ const (
 	slackConfig        secretName = "slack/config"
 )
 
+// String: シークレット名の共通の型を文字列型に変換
 func (sn secretName) String() string {
 	return string(sn)
 }
 
+// newSecretIDList: AWS Secret Manager に設定しているシークレットIDのリストを生成
 func (cfg Config) newSecretIDList() []string {
 	secretIDList := []string{
 		cfg.genSecretID(exchangeRatesAppID.String()),
@@ -58,10 +62,12 @@ func (cfg Config) newSecretIDList() []string {
 	return secretIDList
 }
 
+// genSecretID: サービス名、環境名、シークレット名からシークレットIDを生成
 func (cfg Config) genSecretID(secretName string) string {
 	return fmt.Sprintf("%s/%s/%s", cfg.ServiceName, cfg.Env, secretName)
 }
 
+// getFromSecretsManager: AWS Secret Manager に登録したシークレットをbatchで取得
 func (cfg Config) getFromSecretsManager(ctx context.Context, secretIDList []string) (*secretsmanager.BatchGetSecretValueOutput, error) {
 
 	svc := secretsmanager.NewFromConfig(cfg.AWSConfig)
@@ -77,6 +83,7 @@ func (cfg Config) getFromSecretsManager(ctx context.Context, secretIDList []stri
 	return result, nil
 }
 
+// parseAndSetSlackConfig: slack config はjson型で登録しているため、予め定義した構造体にマッピングする
 func parseAndSetSlackConfig(secretString *string) error {
 
 	var slackConfig struct {
