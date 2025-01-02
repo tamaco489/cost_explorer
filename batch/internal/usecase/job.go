@@ -9,6 +9,7 @@ import (
 	"github.com/tamaco489/cost_explorer/batch/internal/configuration"
 	"github.com/tamaco489/cost_explorer/batch/internal/library/exchange_rates"
 	"github.com/tamaco489/cost_explorer/batch/internal/library/timex"
+	"github.com/tamaco489/cost_explorer/batch/internal/service"
 
 	cost_explorer "github.com/aws/aws-sdk-go-v2/service/costexplorer"
 )
@@ -21,9 +22,10 @@ type Jobber interface {
 var _ Jobber = (*Job)(nil)
 
 type Job struct {
-	execTimeJST         time.Time
-	costExplorerClient  *cost_explorer.Client
-	exchangeRatesClient *exchange_rates.ExchangeRatesClient
+	execTimeJST              time.Time
+	costExplorerClient       *cost_explorer.Client // todo: weeklyのserviceの定義ができたら消す。
+	dailyCostExplorerService *service.DailyCostExplorerService
+	exchangeRatesClient      *exchange_rates.ExchangeRatesClient
 }
 
 func NewJob(cfg configuration.Config) (*Job, error) {
@@ -33,6 +35,7 @@ func NewJob(cfg configuration.Config) (*Job, error) {
 
 	// cost explorer sdk
 	costExplorerClient := cost_explorer.NewFromConfig(cfg.AWSConfig)
+	dailyCostExplorerService := service.NewDailyCostExplorerService(costExplorerClient)
 
 	// open exchange rates api client
 	exchangeRatesClient, err := exchange_rates.NewExchangeClient()
@@ -41,9 +44,10 @@ func NewJob(cfg configuration.Config) (*Job, error) {
 	}
 
 	return &Job{
-		execTimeJST:         execTimeJST,
-		costExplorerClient:  costExplorerClient,
-		exchangeRatesClient: exchangeRatesClient,
+		execTimeJST:              execTimeJST,
+		costExplorerClient:       costExplorerClient, // todo: weeklyのserviceの定義ができたら消す。
+		dailyCostExplorerService: dailyCostExplorerService,
+		exchangeRatesClient:      exchangeRatesClient,
 	}, nil
 }
 
