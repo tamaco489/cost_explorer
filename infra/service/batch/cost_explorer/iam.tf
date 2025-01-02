@@ -27,9 +27,22 @@ resource "aws_iam_role_policy" "cost_explorer" {
 }
 
 data "aws_iam_policy_document" "cost_explorer" {
+  # DOC: secretsmanager:BatchGetSecretValue の指定方法
+  # DOC: https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access_iam-policies.html#auth-and-access_examples_batch
   statement {
     effect  = "Allow"
-    actions = ["secretsmanager:BatchGetSecretValue"]
+    actions = [
+      "secretsmanager:ListSecrets",
+      "secretsmanager:BatchGetSecretValue"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    effect  = "Allow"
+    actions = [
+      "secretsmanager:GetSecretValue"
+    ]
     resources = [
       data.aws_secretsmanager_secret.slack_config.arn,
       data.aws_secretsmanager_secret.exchange_rates_app_id.arn
@@ -40,7 +53,6 @@ data "aws_iam_policy_document" "cost_explorer" {
     actions = [
       "ce:GetCostAndUsage"
     ]
-    // NOTE: 検証が済んだら権限制限しよう
     resources = ["*"]
   }
 }
