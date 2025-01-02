@@ -1,9 +1,10 @@
 # =================================================================
 # common
 # =================================================================
+ENV           ?= dev
 VERSION       := cost_explorer_v0.0.0
 AWS_REGION    := ap-northeast-1
-IMAGE_NAME    := dev-cost-explorer
+IMAGE_NAME    := $(ENV)-cost-explorer
 
 
 # =================================================================
@@ -49,11 +50,12 @@ delete-images:
 # =================================================================
 # lambda
 # =================================================================
-FUNCTION_NAME := dev-cost-explorer
+FUNCTION_NAME := $(ENV)-cost-explorer
 OUTPUT_JSON   := payload/result/output.json
 ENCODED_PAYLOAD_DAILY := $(shell echo -n '{"type": "dailyCostReport"}' | base64)
 ENCODED_PAYLOAD_WEEKLY := $(shell echo -n '{"type": "weeklyCostReport"}' | base64)
 
+# $ make get-secret AWS_PROFILE=${AWS_PROFILE}
 .PHONY: deploy invoke-daily
 deploy: push
 	aws lambda update-function-code  --profile $(AWS_PROFILE) \
@@ -75,3 +77,14 @@ invoke-weekly:
 		--function-name $(FUNCTION_NAME) \
 		--payload "$(ENCODED_PAYLOAD_WEEKLY)" \
 		$(OUTPUT_JSON) | jq .
+
+
+# =================================================================
+# secret manager
+# =================================================================
+# $ make get-secret AWS_PROFILE=${AWS_PROFILE}
+.PHONY: get-secret
+get-secret:
+	aws secretsmanager batch-get-secret-value \
+		--profile $(AWS_PROFILE) \
+		--secret-id-list "cost-explorer/$(ENV)/slack/config" "cost-explorer/$(ENV)/exchange-rates/app-id" | jq .

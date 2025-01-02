@@ -15,12 +15,12 @@ const (
 	WeeklyReportTitle ReportTitle = "weekly-cost-report"
 )
 
-// String: レポートタイトル型を文字列型に変換する
+// String: レポートタイトル型を文字列型に変換
 func (rt ReportTitle) String() string {
 	return string(rt)
 }
 
-// SendMessage: slackにメッセージを送信する
+// SendMessage: slackにメッセージを送信
 func (sc *slackClient) SendMessage(ctx context.Context, title string, attachment Attachment) error {
 	err := slack.PostWebhookContext(ctx, sc.webhookURL, &slack.WebhookMessage{
 		Username: sc.userName,
