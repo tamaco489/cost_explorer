@@ -29,7 +29,7 @@ resource "aws_iam_role_policy" "cost_explorer" {
 data "aws_iam_policy_document" "cost_explorer" {
   statement {
     effect  = "Allow"
-    actions = ["secretsmanager:GetSecretValue"]
+    actions = ["secretsmanager:BatchGetSecretValue"]
     resources = [
       data.aws_secretsmanager_secret.slack_config.arn,
       data.aws_secretsmanager_secret.exchange_rates_app_id.arn
