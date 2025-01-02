@@ -6,11 +6,6 @@ VERSION       := cost_explorer_v0.0.0
 AWS_REGION    := ap-northeast-1
 IMAGE_NAME    := $(ENV)-cost-explorer
 
-.PHONY: help
-help: ## ヘルプ
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
-		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
-
 
 # =================================================================
 # ci
@@ -107,3 +102,12 @@ get-secret: ## secret manager に登録した secret を一括で取得
 	aws secretsmanager batch-get-secret-value \
 		--profile $(AWS_PROFILE) \
 		--secret-id-list "cost-explorer/$(ENV)/slack/config" "cost-explorer/$(ENV)/exchange-rates/app-id" | jq .
+
+
+# =================================================================
+# general
+# =================================================================
+.PHONY: help
+help: ## ヘルプ
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
+		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
