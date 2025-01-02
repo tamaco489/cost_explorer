@@ -68,9 +68,6 @@ func (j *Job) WeeklyCostReport(ctx context.Context) error {
 		debug_log.WeeklyParseJPYCostLogs(ctx, jpyUsage.LastWeekCost, jpyUsage.WeekBeforeLastCost)
 	}
 
-	// note: 値の受け渡しを行う
-	jpyUsage.PercentageChange = costUsage.PercentageChange
-
 	// ************************* 5. Slackにメッセージを送信する *************************
 	message := jpyUsage.GenWeeklySlackMessage()
 	sc := slack.NewSlackClient(configuration.Get().Slack.WeeklyWebHookURL, configuration.Get().ServiceName)
