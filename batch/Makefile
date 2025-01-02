@@ -54,9 +54,10 @@ FUNCTION_NAME := $(ENV)-cost-explorer
 OUTPUT_JSON   := payload/result/output.json
 ENCODED_PAYLOAD_DAILY := $(shell echo -n '{"type": "dailyCostReport"}' | base64)
 ENCODED_PAYLOAD_WEEKLY := $(shell echo -n '{"type": "weeklyCostReport"}' | base64)
+ENCODED_PAYLOAD_MONTHLY := $(shell echo -n '{"type": "monthlyCostReport"}' | base64)
 
 # $ make get-secret AWS_PROFILE=${AWS_PROFILE}
-.PHONY: deploy invoke-daily
+.PHONY: deploy invoke-daily invoke-weekly invoke-monthly
 deploy: push
 	aws lambda update-function-code  --profile $(AWS_PROFILE) \
 		--function-name $(FUNCTION_NAME) \
@@ -76,6 +77,14 @@ invoke-weekly:
 		--profile $(AWS_PROFILE) \
 		--function-name $(FUNCTION_NAME) \
 		--payload "$(ENCODED_PAYLOAD_WEEKLY)" \
+		$(OUTPUT_JSON) | jq .
+
+invoke-monthly:
+	@echo "Invoking Lambda with event type: monthlyCostReport"
+	aws lambda invoke \
+		--profile $(AWS_PROFILE) \
+		--function-name $(FUNCTION_NAME) \
+		--payload "$(ENCODED_PAYLOAD_MONTHLY)" \
 		$(OUTPUT_JSON) | jq .
 
 
