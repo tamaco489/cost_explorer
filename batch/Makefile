@@ -6,11 +6,15 @@ VERSION       := cost_explorer_v0.0.0
 AWS_REGION    := ap-northeast-1
 IMAGE_NAME    := $(ENV)-cost-explorer
 
+.PHONY: install-tools
+install-tools:
+	go install go.uber.org/mock/mockgen@latest
+
 
 # =================================================================
 # ci
 # =================================================================
-.PHONY: lint deps build run
+.PHONY: lint deps build run test
 lint: ## golangci-lintによる静的解析
 	golangci-lint run --timeout 3m
 
@@ -20,8 +24,15 @@ deps: ## go.mod の依存性解決
 build: deps ## main.goのビルド
 	go build -o ./build/cost_explorer ./cmd/main.go
 
-run: build ## ビルドファイルを実行 (ci向け)
+run: build ## ビルドファイルを実行
 	./build/cost_explorer
+
+test: ## テストを実行
+	go test -cover -race ./...
+
+.PHONY: mock
+mock: ## mock作成
+	mockgen -source=./internal/library/slack/slack.go -destination=./internal/library/slack/mock/slack.go -package=slack
 
 
 # =================================================================
