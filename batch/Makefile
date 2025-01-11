@@ -33,6 +33,7 @@ test: ## テストを実行
 .PHONY: mock
 mock: ## mock作成
 	mockgen -source=./internal/library/slack/slack.go -destination=./internal/library/slack/mock/slack.go -package=slack
+	mockgen -source=./internal/library/exchange_rates/exchange_rates.go -destination=./internal/library/exchange_rates/mock/exchange_rates.go -package=exchange_rates
 
 
 # =================================================================
