@@ -10,7 +10,7 @@ IMAGE_NAME    := $(ENV)-cost-explorer
 # =================================================================
 # ci
 # =================================================================
-.PHONY: lint deps build run
+.PHONY: lint deps build run test
 lint: ## golangci-lintによる静的解析
 	golangci-lint run --timeout 3m
 
@@ -20,8 +20,11 @@ deps: ## go.mod の依存性解決
 build: deps ## main.goのビルド
 	go build -o ./build/cost_explorer ./cmd/main.go
 
-run: build ## ビルドファイルを実行 (ci向け)
+run: build ## ビルドファイルを実行
 	./build/cost_explorer
+
+test: ## テストを実行
+	go test -cover -race ./...
 
 
 # =================================================================
