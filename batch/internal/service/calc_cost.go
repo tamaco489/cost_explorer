@@ -14,10 +14,26 @@ func (dcu *DailyCostUsage) CalcDailyCostInJPY(res *exchange_rates.ExchangeRatesR
 		return nil, fmt.Errorf("JPY exchange rate not found in the response: %+v", res.Rates)
 	}
 
+	// calc.RoundUpToTwoDecimalPlaces のエラーをチェック
+	yesterdayCost, err := calc.RoundUpToTwoDecimalPlaces(dcu.YesterdayCost * rate)
+	if err != nil {
+		return nil, fmt.Errorf("error rounding up YesterdayCost: %v", err)
+	}
+
+	actualCost, err := calc.RoundUpToTwoDecimalPlaces(dcu.ActualCost * rate)
+	if err != nil {
+		return nil, fmt.Errorf("error rounding up ActualCost: %v", err)
+	}
+
+	forecastCost, err := calc.RoundUpToTwoDecimalPlaces(dcu.ForecastCost * rate)
+	if err != nil {
+		return nil, fmt.Errorf("error rounding up ForecastCost: %v", err)
+	}
+
 	return &DailyCostUsage{
-		YesterdayCost: calc.RoundUpToTwoDecimalPlaces(dcu.YesterdayCost * rate), // 昨日利用したコスト
-		ActualCost:    calc.RoundUpToTwoDecimalPlaces(dcu.ActualCost * rate),    // 本日時点で利用した総コスト
-		ForecastCost:  calc.RoundUpToTwoDecimalPlaces(dcu.ForecastCost * rate),  // 残り日数を考慮した今月の利用コスト
+		YesterdayCost: yesterdayCost, // 昨日利用したコスト
+		ActualCost:    actualCost,    // 本日時点で利用した総コスト
+		ForecastCost:  forecastCost,  // 残り日数を考慮した今月の利用コスト
 	}, nil
 }
 
@@ -28,9 +44,20 @@ func (wcu *WeeklyCostUsage) CalcWeeklyCostInJPY(res *exchange_rates.ExchangeRate
 		return nil, fmt.Errorf("JPY exchange rate not found in the response: %+v", res.Rates)
 	}
 
+	// calc.RoundUpToTwoDecimalPlaces のエラーをチェック
+	lastWeekCost, err := calc.RoundUpToTwoDecimalPlaces(wcu.LastWeekCost * rate)
+	if err != nil {
+		return nil, fmt.Errorf("error rounding up LastWeekCost: %v", err)
+	}
+
+	weekBeforeLastCost, err := calc.RoundUpToTwoDecimalPlaces(wcu.WeekBeforeLastCost * rate)
+	if err != nil {
+		return nil, fmt.Errorf("error rounding up WeekBeforeLastCost: %v", err)
+	}
+
 	return &WeeklyCostUsage{
-		LastWeekCost:       calc.RoundUpToTwoDecimalPlaces(wcu.LastWeekCost * rate),       // 先週利用したコスト
-		WeekBeforeLastCost: calc.RoundUpToTwoDecimalPlaces(wcu.WeekBeforeLastCost * rate), // 先々週利用した総コスト
-		PercentageChange:   wcu.PercentageChange,                                          // 先週と先々週のコスト増減（%）
+		LastWeekCost:       lastWeekCost,         // 先週利用したコスト
+		WeekBeforeLastCost: weekBeforeLastCost,   // 先々週利用した総コスト
+		PercentageChange:   wcu.PercentageChange, // 先週と先々週のコスト増減（%）
 	}, nil
 }
