@@ -1,6 +1,7 @@
 package exchange_rates
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,10 +14,17 @@ import (
 
 const baseURL string = "https://openexchangerates.org/api"
 
+type IExchangeRatesClient interface {
+	GetExchangeRates(ctx context.Context, baseCurrencyCode string, exchangeCurrencyCodes []string) (*ExchangeRatesResponse, error)
+}
+
+var _ IExchangeRatesClient = (*ExchangeRatesClient)(nil)
+
 type ExchangeRatesClient struct {
-	AppID      string
-	HTTPClient *http.Client
-	BaseURL    string
+	AppID          string
+	HTTPClient     *http.Client
+	BaseURL        string
+	BaseCurrencyFn func() string // 基軸通貨を取得する関数
 }
 
 type ExchangeRatesResponse struct {
@@ -36,9 +44,10 @@ func NewExchangeClient() (*ExchangeRatesClient, error) {
 	}
 
 	client := &ExchangeRatesClient{
-		AppID:      appID,
-		HTTPClient: &http.Client{Timeout: 10 * time.Second},
-		BaseURL:    baseURL,
+		AppID:          appID,
+		HTTPClient:     &http.Client{Timeout: 10 * time.Second},
+		BaseURL:        baseURL,
+		BaseCurrencyFn: GetBaseCurrency,
 	}
 
 	return client, nil
@@ -48,7 +57,7 @@ func NewExchangeClient() (*ExchangeRatesClient, error) {
 //
 // 基軸通貨をUSDに設定し、変換対象通貨をJPYに限定
 func (erc *ExchangeRatesClient) PrepareExchangeRates() (*prepareExchangeRates, error) {
-	baseCurrencyCode := USD.String()
+	baseCurrencyCode := erc.BaseCurrencyFn()
 	if !ExchangeRatesCurrencyCode(baseCurrencyCode).Valid() {
 		return nil, fmt.Errorf("invalid base currency: %s", baseCurrencyCode)
 	}
@@ -65,7 +74,7 @@ type prepareExchangeRates struct {
 }
 
 // GetExchangeRates: 為替レートを取得
-func (erc *ExchangeRatesClient) GetExchangeRates(baseCurrencyCode string, exchangeCurrencyCodes []string) (*ExchangeRatesResponse, error) {
+func (erc *ExchangeRatesClient) GetExchangeRates(ctx context.Context, baseCurrencyCode string, exchangeCurrencyCodes []string) (*ExchangeRatesResponse, error) {
 
 	symbolsParam := strings.Join(exchangeCurrencyCodes, ",")
 

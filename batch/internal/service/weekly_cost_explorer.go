@@ -9,6 +9,14 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/costexplorer/types"
 )
 
+type IWeeklyCostExplorerClient interface {
+	GetLastWeekCost(ctx context.Context, lastWeekStartDate, lastWeekEndDate string) (float64, error)
+	GetWeekBeforeLastCost(ctx context.Context, weekBeforeLastStartDate, weekBeforeLastEndDate string) (float64, error)
+	CalcPercentageChange(ctx context.Context, lastWeekCost, weekBeforeLastCost float64) (float64, error)
+}
+
+var _ IWeeklyCostExplorerClient = (*WeeklyCostExplorerService)(nil)
+
 type WeeklyCostExplorerService struct {
 	client *cost_explorer.Client
 }

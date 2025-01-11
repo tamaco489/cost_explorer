@@ -55,7 +55,7 @@ func (j *Job) DailyCostReport(ctx context.Context) error {
 		return err
 	}
 
-	ratesResponse, err := j.exchangeRatesClient.GetExchangeRates(pxr.BaseCurrencyCode, pxr.ExchangeCurrencyCodes)
+	ratesResponse, err := j.exchangeRatesClient.GetExchangeRates(ctx, pxr.BaseCurrencyCode, pxr.ExchangeCurrencyCodes)
 	if err != nil {
 		return fmt.Errorf("failed to get exchange rates: %w", err)
 	}

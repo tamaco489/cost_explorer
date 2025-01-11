@@ -15,11 +15,13 @@ type Attachment slack.Attachment
 // SlackClientInterface は、Slackにメッセージを送信するためのインターフェースを定義します。
 //
 // GoMockを使用してテスト時にモックを作成するためにこのインターフェースを定義します。
-type SlackClientInterface interface {
+type ISlackClient interface {
 	// SendMessage は、Slackにメッセージを送信するメソッドです。
 	// 引数として、コンテキスト、メッセージのタイトル、添付ファイル（Attachment）を受け取ります。
 	SendMessage(ctx context.Context, title string, attachment Attachment) error
 }
+
+var _ ISlackClient = (*slackClient)(nil)
 
 // slackClient は、Slackにメッセージを送信するための構造体です。
 //

@@ -11,28 +11,44 @@ import (
 
 // loadSecrets: AWS Secret Manager からシークレットを取得
 func loadSecrets(ctx context.Context, cfg Config) error {
-	secretIDList := cfg.newSecretIDList()
-	result, err := cfg.getFromSecretsManager(ctx, secretIDList)
-	if err != nil {
-		return err
-	}
 
-	for _, secret := range result.SecretValues {
-		switch *secret.Name {
-		case cfg.genSecretID(slackConfig.String()):
-			if err := parseAndSetSlackConfig(secret.SecretString); err != nil {
-				return err
-			}
+	env := globalConfig.Env
+	switch env {
+	case "test":
+		globalConfig.Slack.DailyWebHookURL = "test_slack_daily_webhook_url"
+		globalConfig.Slack.WeeklyWebHookURL = "test_slack_weekly_webhook_url"
+		globalConfig.ExchangeRates.AppID = "test_app_id"
+		return nil
 
-		case cfg.genSecretID(exchangeRatesAppID.String()):
-			globalConfig.ExchangeRates.AppID = *secret.SecretString
-
-		default:
-			slog.WarnContext(ctx, "not found secret name",
-				slog.String("env", cfg.Env),
-				slog.String("secret name", *secret.Name),
-			)
+	case "dev":
+		secretIDList := cfg.newSecretIDList()
+		result, err := cfg.getFromSecretsManager(ctx, secretIDList)
+		if err != nil {
+			return err
 		}
+
+		for _, secret := range result.SecretValues {
+			switch *secret.Name {
+			case cfg.genSecretID(slackConfig.String()):
+				if err := parseAndSetSlackConfig(secret.SecretString); err != nil {
+					return err
+				}
+
+			case cfg.genSecretID(exchangeRatesAppID.String()):
+				globalConfig.ExchangeRates.AppID = *secret.SecretString
+
+			default:
+				slog.WarnContext(ctx, "not found secret name.",
+					slog.String("env", cfg.Env),
+					slog.String("secret name", *secret.Name),
+				)
+			}
+		}
+
+	default:
+		slog.WarnContext(ctx, "specified env does not exist.",
+			slog.String("env", cfg.Env),
+		)
 	}
 
 	return nil

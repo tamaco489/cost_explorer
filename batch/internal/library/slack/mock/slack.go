@@ -17,32 +17,32 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
-// MockSlackClientInterface is a mock of SlackClientInterface interface.
-type MockSlackClientInterface struct {
+// MockISlackClient is a mock of ISlackClient interface.
+type MockISlackClient struct {
 	ctrl     *gomock.Controller
-	recorder *MockSlackClientInterfaceMockRecorder
+	recorder *MockISlackClientMockRecorder
 	isgomock struct{}
 }
 
-// MockSlackClientInterfaceMockRecorder is the mock recorder for MockSlackClientInterface.
-type MockSlackClientInterfaceMockRecorder struct {
-	mock *MockSlackClientInterface
+// MockISlackClientMockRecorder is the mock recorder for MockISlackClient.
+type MockISlackClientMockRecorder struct {
+	mock *MockISlackClient
 }
 
-// NewMockSlackClientInterface creates a new mock instance.
-func NewMockSlackClientInterface(ctrl *gomock.Controller) *MockSlackClientInterface {
-	mock := &MockSlackClientInterface{ctrl: ctrl}
-	mock.recorder = &MockSlackClientInterfaceMockRecorder{mock}
+// NewMockISlackClient creates a new mock instance.
+func NewMockISlackClient(ctrl *gomock.Controller) *MockISlackClient {
+	mock := &MockISlackClient{ctrl: ctrl}
+	mock.recorder = &MockISlackClientMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockSlackClientInterface) EXPECT() *MockSlackClientInterfaceMockRecorder {
+func (m *MockISlackClient) EXPECT() *MockISlackClientMockRecorder {
 	return m.recorder
 }
 
 // SendMessage mocks base method.
-func (m *MockSlackClientInterface) SendMessage(ctx context.Context, title string, attachment slack.Attachment) error {
+func (m *MockISlackClient) SendMessage(ctx context.Context, title string, attachment slack.Attachment) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SendMessage", ctx, title, attachment)
 	ret0, _ := ret[0].(error)
@@ -50,7 +50,7 @@ func (m *MockSlackClientInterface) SendMessage(ctx context.Context, title string
 }
 
 // SendMessage indicates an expected call of SendMessage.
-func (mr *MockSlackClientInterfaceMockRecorder) SendMessage(ctx, title, attachment any) *gomock.Call {
+func (mr *MockISlackClientMockRecorder) SendMessage(ctx, title, attachment any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMessage", reflect.TypeOf((*MockSlackClientInterface)(nil).SendMessage), ctx, title, attachment)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMessage", reflect.TypeOf((*MockISlackClient)(nil).SendMessage), ctx, title, attachment)
 }
