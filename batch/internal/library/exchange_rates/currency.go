@@ -16,6 +16,11 @@ func (ecc ExchangeRatesCurrencyCode) String() string {
 	return string(ecc)
 }
 
+// getBaseCurrency: 基軸通貨 (USD) を取得
+func GetBaseCurrency() string {
+	return USD.String()
+}
+
 // Valid: 指定された基軸通貨が正しいかを検証
 //
 // 現状のプランでは、USD以外は基軸通貨として指定できないため、無効な通貨が指定されている場合はエラーとして扱う
