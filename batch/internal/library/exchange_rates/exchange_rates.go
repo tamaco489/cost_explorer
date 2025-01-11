@@ -1,6 +1,7 @@
 package exchange_rates
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,7 +15,7 @@ import (
 const baseURL string = "https://openexchangerates.org/api"
 
 type ExchangeRatesClientInterface interface {
-	GetExchangeRates(baseCurrencyCode string, exchangeCurrencyCodes []string) (*ExchangeRatesResponse, error)
+	GetExchangeRates(ctx context.Context, baseCurrencyCode string, exchangeCurrencyCodes []string) (*ExchangeRatesResponse, error)
 }
 
 var _ ExchangeRatesClientInterface = (*ExchangeRatesClient)(nil)
@@ -71,7 +72,7 @@ type prepareExchangeRates struct {
 }
 
 // GetExchangeRates: 為替レートを取得
-func (erc *ExchangeRatesClient) GetExchangeRates(baseCurrencyCode string, exchangeCurrencyCodes []string) (*ExchangeRatesResponse, error) {
+func (erc *ExchangeRatesClient) GetExchangeRates(ctx context.Context, baseCurrencyCode string, exchangeCurrencyCodes []string) (*ExchangeRatesResponse, error) {
 
 	symbolsParam := strings.Join(exchangeCurrencyCodes, ",")
 
