@@ -21,15 +21,15 @@ func TestSendMessage(t *testing.T) {
 	defer ctrl.Finish()
 
 	// モックのSlackClientを生成
-	mockSlackClient := slack_mock.NewMockSlackClientInterface(ctrl)
+	mockClient := slack_mock.NewMockSlackClientInterface(ctrl)
 
 	// モックで期待される振る舞いを設定
-	mockSlackClient.EXPECT().
+	mockClient.EXPECT().
 		SendMessage(ctx, messageTitle, sa).
 		Return(nil).
 		Times(1) // 1回呼び出されることを期待
 
-	// SendMessage をモックしたものを使って呼び出し (外部通信は行われない)
-	err := mockSlackClient.SendMessage(ctx, messageTitle, sa)
+	// SendMessage をMockで実行 (外部通信は実行されない)
+	err := mockClient.SendMessage(ctx, messageTitle, sa)
 	assert.NoError(t, err)
 }
