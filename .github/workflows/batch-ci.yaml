@@ -1,0 +1,45 @@
+name: Cost Explorer CI
+
+on:
+  pull_request:
+    paths:
+      - batch/**
+      - .github/workflows/batch-ci.yaml
+
+env:
+  API_ENV: test
+
+jobs:
+  lint:
+    runs-on: ubuntu-22.04
+    name: go lint
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6.1.1
+        with:
+          version: v1.61.0
+          working-directory: ./batch
+          args: --timeout 5m
+
+  test:
+    runs-on: ubuntu-22.04
+    name: go build & test
+    defaults:
+      run:
+        working-directory: ./batch
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: ./batch/go.mod
+          check-latest: true
+          cache-dependency-path: ./batch/go.sum
+
+      - name: check dependencies & build
+        run: make build
+
+      - name: Run Go Test
+        run: make test
