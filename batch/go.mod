@@ -11,6 +11,8 @@ require (
 	github.com/go-playground/assert v1.2.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/slack-go/slack v0.15.0
+	github.com/stretchr/testify v1.9.0
+	go.uber.org/mock v0.5.0
 )
 
 require (
@@ -25,5 +27,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.28.7 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.33.3 // indirect
 	github.com/aws/smithy-go v1.22.1 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
