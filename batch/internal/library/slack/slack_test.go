@@ -21,7 +21,7 @@ func TestSendMessage(t *testing.T) {
 	defer ctrl.Finish()
 
 	// モックのSlackClientを生成
-	mockClient := slack_mock.NewMockSlackClientInterface(ctrl)
+	mockClient := slack_mock.NewMockISlackClient(ctrl)
 
 	// モックで期待される振る舞いを設定
 	mockClient.EXPECT().
