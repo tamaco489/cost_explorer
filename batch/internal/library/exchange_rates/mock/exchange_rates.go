@@ -17,32 +17,32 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
-// MockExchangeRatesClientInterface is a mock of ExchangeRatesClientInterface interface.
-type MockExchangeRatesClientInterface struct {
+// MockIExchangeRatesClient is a mock of IExchangeRatesClient interface.
+type MockIExchangeRatesClient struct {
 	ctrl     *gomock.Controller
-	recorder *MockExchangeRatesClientInterfaceMockRecorder
+	recorder *MockIExchangeRatesClientMockRecorder
 	isgomock struct{}
 }
 
-// MockExchangeRatesClientInterfaceMockRecorder is the mock recorder for MockExchangeRatesClientInterface.
-type MockExchangeRatesClientInterfaceMockRecorder struct {
-	mock *MockExchangeRatesClientInterface
+// MockIExchangeRatesClientMockRecorder is the mock recorder for MockIExchangeRatesClient.
+type MockIExchangeRatesClientMockRecorder struct {
+	mock *MockIExchangeRatesClient
 }
 
-// NewMockExchangeRatesClientInterface creates a new mock instance.
-func NewMockExchangeRatesClientInterface(ctrl *gomock.Controller) *MockExchangeRatesClientInterface {
-	mock := &MockExchangeRatesClientInterface{ctrl: ctrl}
-	mock.recorder = &MockExchangeRatesClientInterfaceMockRecorder{mock}
+// NewMockIExchangeRatesClient creates a new mock instance.
+func NewMockIExchangeRatesClient(ctrl *gomock.Controller) *MockIExchangeRatesClient {
+	mock := &MockIExchangeRatesClient{ctrl: ctrl}
+	mock.recorder = &MockIExchangeRatesClientMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockExchangeRatesClientInterface) EXPECT() *MockExchangeRatesClientInterfaceMockRecorder {
+func (m *MockIExchangeRatesClient) EXPECT() *MockIExchangeRatesClientMockRecorder {
 	return m.recorder
 }
 
 // GetExchangeRates mocks base method.
-func (m *MockExchangeRatesClientInterface) GetExchangeRates(ctx context.Context, baseCurrencyCode string, exchangeCurrencyCodes []string) (*exchange_rates.ExchangeRatesResponse, error) {
+func (m *MockIExchangeRatesClient) GetExchangeRates(ctx context.Context, baseCurrencyCode string, exchangeCurrencyCodes []string) (*exchange_rates.ExchangeRatesResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetExchangeRates", ctx, baseCurrencyCode, exchangeCurrencyCodes)
 	ret0, _ := ret[0].(*exchange_rates.ExchangeRatesResponse)
@@ -51,7 +51,7 @@ func (m *MockExchangeRatesClientInterface) GetExchangeRates(ctx context.Context,
 }
 
 // GetExchangeRates indicates an expected call of GetExchangeRates.
-func (mr *MockExchangeRatesClientInterfaceMockRecorder) GetExchangeRates(ctx, baseCurrencyCode, exchangeCurrencyCodes any) *gomock.Call {
+func (mr *MockIExchangeRatesClientMockRecorder) GetExchangeRates(ctx, baseCurrencyCode, exchangeCurrencyCodes any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExchangeRates", reflect.TypeOf((*MockExchangeRatesClientInterface)(nil).GetExchangeRates), ctx, baseCurrencyCode, exchangeCurrencyCodes)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExchangeRates", reflect.TypeOf((*MockIExchangeRatesClient)(nil).GetExchangeRates), ctx, baseCurrencyCode, exchangeCurrencyCodes)
 }

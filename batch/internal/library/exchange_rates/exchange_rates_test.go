@@ -72,7 +72,7 @@ func TestGetExchangeRates(t *testing.T) {
 	defer ctrl.Finish()
 
 	// MockのSlackClientを生成
-	mockClient := exchange_rates_mock.NewMockExchangeRatesClientInterface(ctrl)
+	mockClient := exchange_rates_mock.NewMockIExchangeRatesClient(ctrl)
 
 	// GetExchangeRates を実行するための引数を定義
 	baseCurrency := exchange_rates.USD.String()

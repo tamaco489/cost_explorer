@@ -14,11 +14,11 @@ import (
 
 const baseURL string = "https://openexchangerates.org/api"
 
-type ExchangeRatesClientInterface interface {
+type IExchangeRatesClient interface {
 	GetExchangeRates(ctx context.Context, baseCurrencyCode string, exchangeCurrencyCodes []string) (*ExchangeRatesResponse, error)
 }
 
-var _ ExchangeRatesClientInterface = (*ExchangeRatesClient)(nil)
+var _ IExchangeRatesClient = (*ExchangeRatesClient)(nil)
 
 type ExchangeRatesClient struct {
 	AppID          string
