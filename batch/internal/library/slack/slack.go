@@ -21,6 +21,8 @@ type SlackClientInterface interface {
 	SendMessage(ctx context.Context, title string, attachment Attachment) error
 }
 
+var _ SlackClientInterface = (*slackClient)(nil)
+
 // slackClient は、Slackにメッセージを送信するための構造体です。
 //
 // webhookURL とユーザー名を保持し、Slackへの接続に必要な情報を持ちます。
