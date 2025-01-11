@@ -10,6 +10,7 @@
 package exchange_rates
 
 import (
+	context "context"
 	reflect "reflect"
 
 	exchange_rates "github.com/tamaco489/cost_explorer/batch/internal/library/exchange_rates"
@@ -41,16 +42,16 @@ func (m *MockExchangeRatesClientInterface) EXPECT() *MockExchangeRatesClientInte
 }
 
 // GetExchangeRates mocks base method.
-func (m *MockExchangeRatesClientInterface) GetExchangeRates(baseCurrencyCode string, exchangeCurrencyCodes []string) (*exchange_rates.ExchangeRatesResponse, error) {
+func (m *MockExchangeRatesClientInterface) GetExchangeRates(ctx context.Context, baseCurrencyCode string, exchangeCurrencyCodes []string) (*exchange_rates.ExchangeRatesResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetExchangeRates", baseCurrencyCode, exchangeCurrencyCodes)
+	ret := m.ctrl.Call(m, "GetExchangeRates", ctx, baseCurrencyCode, exchangeCurrencyCodes)
 	ret0, _ := ret[0].(*exchange_rates.ExchangeRatesResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetExchangeRates indicates an expected call of GetExchangeRates.
-func (mr *MockExchangeRatesClientInterfaceMockRecorder) GetExchangeRates(baseCurrencyCode, exchangeCurrencyCodes any) *gomock.Call {
+func (mr *MockExchangeRatesClientInterfaceMockRecorder) GetExchangeRates(ctx, baseCurrencyCode, exchangeCurrencyCodes any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExchangeRates", reflect.TypeOf((*MockExchangeRatesClientInterface)(nil).GetExchangeRates), baseCurrencyCode, exchangeCurrencyCodes)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExchangeRates", reflect.TypeOf((*MockExchangeRatesClientInterface)(nil).GetExchangeRates), ctx, baseCurrencyCode, exchangeCurrencyCodes)
 }
