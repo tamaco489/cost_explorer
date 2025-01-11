@@ -16,32 +16,32 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
-// MockICostExplorerClient is a mock of ICostExplorerClient interface.
-type MockICostExplorerClient struct {
+// MockIDailyCostExplorerClient is a mock of IDailyCostExplorerClient interface.
+type MockIDailyCostExplorerClient struct {
 	ctrl     *gomock.Controller
-	recorder *MockICostExplorerClientMockRecorder
+	recorder *MockIDailyCostExplorerClientMockRecorder
 	isgomock struct{}
 }
 
-// MockICostExplorerClientMockRecorder is the mock recorder for MockICostExplorerClient.
-type MockICostExplorerClientMockRecorder struct {
-	mock *MockICostExplorerClient
+// MockIDailyCostExplorerClientMockRecorder is the mock recorder for MockIDailyCostExplorerClient.
+type MockIDailyCostExplorerClientMockRecorder struct {
+	mock *MockIDailyCostExplorerClient
 }
 
-// NewMockICostExplorerClient creates a new mock instance.
-func NewMockICostExplorerClient(ctrl *gomock.Controller) *MockICostExplorerClient {
-	mock := &MockICostExplorerClient{ctrl: ctrl}
-	mock.recorder = &MockICostExplorerClientMockRecorder{mock}
+// NewMockIDailyCostExplorerClient creates a new mock instance.
+func NewMockIDailyCostExplorerClient(ctrl *gomock.Controller) *MockIDailyCostExplorerClient {
+	mock := &MockIDailyCostExplorerClient{ctrl: ctrl}
+	mock.recorder = &MockIDailyCostExplorerClientMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockICostExplorerClient) EXPECT() *MockICostExplorerClientMockRecorder {
+func (m *MockIDailyCostExplorerClient) EXPECT() *MockIDailyCostExplorerClientMockRecorder {
 	return m.recorder
 }
 
 // GetActualCost mocks base method.
-func (m *MockICostExplorerClient) GetActualCost(ctx context.Context, startDate, endDate string) (float64, error) {
+func (m *MockIDailyCostExplorerClient) GetActualCost(ctx context.Context, startDate, endDate string) (float64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetActualCost", ctx, startDate, endDate)
 	ret0, _ := ret[0].(float64)
@@ -50,13 +50,13 @@ func (m *MockICostExplorerClient) GetActualCost(ctx context.Context, startDate, 
 }
 
 // GetActualCost indicates an expected call of GetActualCost.
-func (mr *MockICostExplorerClientMockRecorder) GetActualCost(ctx, startDate, endDate any) *gomock.Call {
+func (mr *MockIDailyCostExplorerClientMockRecorder) GetActualCost(ctx, startDate, endDate any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetActualCost", reflect.TypeOf((*MockICostExplorerClient)(nil).GetActualCost), ctx, startDate, endDate)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetActualCost", reflect.TypeOf((*MockIDailyCostExplorerClient)(nil).GetActualCost), ctx, startDate, endDate)
 }
 
 // GetForecastCost mocks base method.
-func (m *MockICostExplorerClient) GetForecastCost(ctx context.Context, actualCost float64, currentDay, daysInMonth int) (float64, error) {
+func (m *MockIDailyCostExplorerClient) GetForecastCost(ctx context.Context, actualCost float64, currentDay, daysInMonth int) (float64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetForecastCost", ctx, actualCost, currentDay, daysInMonth)
 	ret0, _ := ret[0].(float64)
@@ -65,13 +65,13 @@ func (m *MockICostExplorerClient) GetForecastCost(ctx context.Context, actualCos
 }
 
 // GetForecastCost indicates an expected call of GetForecastCost.
-func (mr *MockICostExplorerClientMockRecorder) GetForecastCost(ctx, actualCost, currentDay, daysInMonth any) *gomock.Call {
+func (mr *MockIDailyCostExplorerClientMockRecorder) GetForecastCost(ctx, actualCost, currentDay, daysInMonth any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetForecastCost", reflect.TypeOf((*MockICostExplorerClient)(nil).GetForecastCost), ctx, actualCost, currentDay, daysInMonth)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetForecastCost", reflect.TypeOf((*MockIDailyCostExplorerClient)(nil).GetForecastCost), ctx, actualCost, currentDay, daysInMonth)
 }
 
 // GetYesterdayCost mocks base method.
-func (m *MockICostExplorerClient) GetYesterdayCost(ctx context.Context, yesterday, endDate string) (float64, error) {
+func (m *MockIDailyCostExplorerClient) GetYesterdayCost(ctx context.Context, yesterday, endDate string) (float64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetYesterdayCost", ctx, yesterday, endDate)
 	ret0, _ := ret[0].(float64)
@@ -80,7 +80,7 @@ func (m *MockICostExplorerClient) GetYesterdayCost(ctx context.Context, yesterda
 }
 
 // GetYesterdayCost indicates an expected call of GetYesterdayCost.
-func (mr *MockICostExplorerClientMockRecorder) GetYesterdayCost(ctx, yesterday, endDate any) *gomock.Call {
+func (mr *MockIDailyCostExplorerClientMockRecorder) GetYesterdayCost(ctx, yesterday, endDate any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetYesterdayCost", reflect.TypeOf((*MockICostExplorerClient)(nil).GetYesterdayCost), ctx, yesterday, endDate)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetYesterdayCost", reflect.TypeOf((*MockIDailyCostExplorerClient)(nil).GetYesterdayCost), ctx, yesterday, endDate)
 }

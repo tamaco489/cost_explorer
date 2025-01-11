@@ -9,13 +9,13 @@ import (
 	cost_explorer "github.com/aws/aws-sdk-go-v2/service/costexplorer"
 )
 
-type ICostExplorerClient interface {
+type IDailyCostExplorerClient interface {
 	GetYesterdayCost(ctx context.Context, yesterday, endDate string) (float64, error)
 	GetActualCost(ctx context.Context, startDate, endDate string) (float64, error)
 	GetForecastCost(ctx context.Context, actualCost float64, currentDay, daysInMonth int) (float64, error)
 }
 
-var _ ICostExplorerClient = (*DailyCostExplorerService)(nil)
+var _ IDailyCostExplorerClient = (*DailyCostExplorerService)(nil)
 
 type DailyCostExplorerService struct {
 	client *cost_explorer.Client

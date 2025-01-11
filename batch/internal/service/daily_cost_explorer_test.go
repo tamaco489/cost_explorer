@@ -18,7 +18,7 @@ func TestGetYesterdayCost(t *testing.T) {
 	defer ctrl.Finish()
 
 	// MockのSlackClientを生成
-	mockClient := service_mock.NewMockICostExplorerClient(ctrl)
+	mockClient := service_mock.NewMockIDailyCostExplorerClient(ctrl)
 
 	// GetYesterdayCost を実行するための引数を定義
 	execTime := time.Now()
